@@ -1,0 +1,159 @@
+<p><%= link_to "← All claims", claims_path %></p>
+
+<h1>Claim #<%= @claim.tracking_number %></h1>
+
+<h2>Claim</h2>
+<table class="detail">
+  <tr><th>Status</th><td><%= @claim.status %></td></tr>
+  <tr><th>Claim date</th><td><%= @claim.claim_date %></td></tr>
+  <tr><th>Claim amount</th><td><%= number_to_currency(@claim.claim_amount) if @claim.claim_amount %></td></tr>
+  <tr><th>Termination type</th><td><%= @claim.termination_type %></td></tr>
+  <tr><th>Approval date</th><td><%= @claim.approval_date %></td></tr>
+  <tr><th>Approved benefit</th><td><%= number_to_currency(@claim.approved_benefit_amount) if @claim.approved_benefit_amount %></td></tr>
+  <% if @claim.approved_benefit_note %>
+    <tr><th>Approved benefit note</th><td><%= @claim.approved_benefit_note %></td></tr>
+  <% end %>
+  <tr><th>Posted date</th><td><%= @claim.posted_date %></td></tr>
+  <tr><th>PM notified</th><td><%= @claim.pm_notified_at %></td></tr>
+  <tr><th>Pending docs from PM</th><td><%= @claim.pending_docs_from_pm %></td></tr>
+  <tr><th>PM explanation</th><td><%= @claim.pm_explanation %></td></tr>
+  <tr><th>Hold reason</th><td><%= @claim.hold_reason %></td></tr>
+  <tr><th>Audit selected</th><td><%= @claim.audit_selected %></td></tr>
+  <tr><th>Exception flag</th><td><%= @claim.exception_flag %></td></tr>
+</table>
+
+<h2>Lease &amp; property</h2>
+<table class="detail">
+  <tr><th>Property</th><td><%= @claim.lease.property.full_address %></td></tr>
+  <tr><th>Lease term</th><td><%= @claim.lease.start_date %> — <%= @claim.lease.end_date %></td></tr>
+  <tr><th>Move-out</th><td><%= @claim.lease.move_out_date %></td></tr>
+  <tr><th>Monthly rent</th><td><%= number_to_currency(@claim.lease.monthly_rent) if @claim.lease.monthly_rent %></td></tr>
+  <% if @claim.lease.property_manager %>
+    <tr><th>Property manager</th><td><%= @claim.lease.property_manager.name %> (<%= @claim.lease.property_manager.pm_company.name %>)</td></tr>
+  <% end %>
+</table>
+
+<h2>Tenants</h2>
+<table>
+  <thead><tr><th>#</th><th>Relationship</th><th>Employer</th><th>Employer phone</th></tr></thead>
+  <tbody>
+    <% @claim.lease.tenants.sort_by(&:tenant_number).each do |t| %>
+      <tr>
+        <td><%= t.tenant_number %></td>
+        <td><%= t.relationship %></td>
+        <td><%= t.employer_name %></td>
+        <td><%= t.employer_phone %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @claim.policy %>
+  <h2>Policy</h2>
+  <table class="detail">
+    <tr><th>Policy #</th><td><%= @claim.policy.policy_number %></td></tr>
+    <tr><th>Group #</th><td><%= @claim.policy.group_number %></td></tr>
+    <tr><th>Treaty #</th><td><%= @claim.policy.treaty_number %></td></tr>
+    <tr><th>Max benefit</th><td><%= number_to_currency(@claim.policy.max_benefit) if @claim.policy.max_benefit %></td></tr>
+  </table>
+<% end %>
+
+<% if @documents.any? %>
+  <details class="group-toggle">
+    <summary>PDFs</summary>
+
+    <h2>Documents (<%= @documents.size %>)</h2>
+    <table>
+      <thead><tr><th>File</th><th>Type</th><th>Size</th><th>Extraction</th></tr></thead>
+      <tbody>
+        <% @documents.each do |doc| %>
+          <tr>
+            <td><%= doc.original_name %></td>
+            <td><%= doc.doc_type&.humanize %></td>
+            <td class="num"><%= number_to_human_size(doc.byte_size) %></td>
+            <td>
+              <%= doc.extraction_status %>
+              <% if doc.extraction_error %><span class="empty-note">— <%= doc.extraction_error %></span><% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if @line_items.any? %>
+      <h2>Extracted Line Items (<%= @line_items.size %>)</h2>
+      <table>
+        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="num">Amount</th><th>Disposition</th><th>Source</th></tr></thead>
+        <tbody>
+          <% @line_items.each do |item| %>
+            <tr>
+              <td><%= item.txn_date %></td>
+              <td><%= item.description %></td>
+              <td><%= item.category.humanize %></td>
+              <td class="num"><%= number_to_currency(item.amount) %></td>
+              <td><%= item.disposition %></td>
+              <td><%= item.document.original_name.truncate(30) %></td>
+            </tr>
+          <% end %>
+          <tr>
+            <th colspan="3">Total</th>
+            <th class="num"><%= number_to_currency(@line_items.sum(&:amount)) %></th>
+            <th colspan="2"></th>
+          </tr>
+        </tbody>
+      </table>
+    <% end %>
+  </details>
+<% end %>
+
+<% if @decisions.any? %>
+  <h2>Adjudication</h2>
+  <table>
+    <thead><tr><th>Stage</th><th>Outcome</th><th class="num">Amount</th><th>Reason</th><th>Decided by</th><th>At</th></tr></thead>
+    <tbody>
+      <% @decisions.each do |d| %>
+        <tr>
+          <td><%= d.stage %></td>
+          <td><%= d.outcome %></td>
+          <td class="num"><%= number_to_currency(d.amount) if d.amount %></td>
+          <td><%= d.rule_or_reason %></td>
+          <td><%= d.decided_by %></td>
+          <td><%= d.decided_at.strftime("%b %-d, %Y") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+
+<h2>Activity<% if @activities.any? %> (<%= @activities.size %>)<% end %></h2>
+<% if @activities.any? %>
+  <p class="link-note"><%= link_method_label(@activities.first.link_method) %></p>
+  <% @activities.each do |activity| %>
+    <div class="comment">
+      <div class="comment-meta">
+        <span class="comment-author"><%= activity.author %></span>
+        <span><%= activity.occurred_at.strftime("%b %-d, %Y %-l:%M %p") %></span>
+      </div>
+      <div class="comment-body"><%= activity.body %></div>
+    </div>
+  <% end %>
+<% else %>
+  <p class="empty-note">
+    No activity linked to this claim yet. Comment threads from the spreadsheet
+    couldn't be positionally matched (the sheet was re-sorted after export);
+    only content-verified links are shown.
+    <%= link_to "Browse unlinked threads", unlinked_activities_path %>.
+  </p>
+<% end %>
+
+<% if @claim.collection_record %>
+  <h2>Collections</h2>
+  <table class="detail">
+    <tr><th>Status</th><td><%= @claim.collection_record.collection_status %></td></tr>
+    <tr><th>Tenant contacted via</th><td><%= @claim.collection_record.tenant_contacted_methods&.split("\n")&.join(", ") %></td></tr>
+    <tr><th>Tenant collection status</th><td><%= @claim.collection_record.tenant_collection_status %></td></tr>
+    <tr><th>Settlement</th><td><%= number_to_currency(@claim.collection_record.settlement_amount) if @claim.collection_record.settlement_amount %> <%= @claim.collection_record.settlement_date %></td></tr>
+    <tr><th>Collected</th><td><%= number_to_currency(@claim.collection_record.collected_amount) if @claim.collection_record.collected_amount %> <%= @claim.collection_record.collected_date %></td></tr>
+    <tr><th>Processed</th><td><%= @claim.collection_record.collection_processed_date %></td></tr>
+  </table>
+<% end %>

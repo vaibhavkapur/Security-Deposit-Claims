@@ -1,0 +1,27 @@
+<p><%= link_to "← All claims", claims_path %></p>
+
+<h1>Unlinked activity threads</h1>
+<p class="empty-note">
+  <%= @total_threads %> comment threads reference spreadsheet rows that can't be
+  positionally trusted (the sheet was re-sorted after export). Each thread stays
+  grouped by its original row reference until it can be linked to a claim by content.
+</p>
+
+<% @threads.each do |ref, activities| %>
+  <h3><%= ref %> · <%= pluralize(activities.size, "comment") %></h3>
+  <% activities.each do |activity| %>
+    <div class="comment">
+      <div class="comment-meta">
+        <span class="comment-author"><%= activity.author %></span>
+        <span><%= activity.occurred_at.strftime("%b %-d, %Y %-l:%M %p") %></span>
+      </div>
+      <div class="comment-body"><%= activity.body %></div>
+    </div>
+  <% end %>
+<% end %>
+
+<p>
+  <% if @page > 1 %><%= link_to "← Newer", unlinked_activities_path(page: @page - 1) %><% end %>
+  Page <%= @page %> of <%= @pages %>
+  <% if @page < @pages %><%= link_to "Older →", unlinked_activities_path(page: @page + 1) %><% end %>
+</p>

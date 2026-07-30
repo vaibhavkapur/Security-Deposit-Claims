@@ -1,0 +1,38 @@
+<section class="table-section">
+  <h3 class="table-heading">
+    <code><%= table[:name] %></code>
+    <span class="row-count"><%= number_with_delimiter(table[:count]) %> rows</span>
+  </h3>
+
+  <% if table[:count].zero? %>
+    <p class="empty-note">empty</p>
+  <% else %>
+    <div class="scroll-x">
+      <table>
+        <thead>
+          <tr>
+            <% table[:columns].each do |col| %>
+              <th><%= col %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% table[:rows].each do |record| %>
+            <tr>
+              <% table[:columns].each do |col| %>
+                <td><%= record[col].to_s.truncate(40) %></td>
+              <% end %>
+            </tr>
+          <% end %>
+          <% if table[:count] > table[:rows].size %>
+            <tr>
+              <td colspan="<%= table[:columns].size %>" class="more-rows">
+                … and <%= number_with_delimiter(table[:count] - table[:rows].size) %> more rows
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</section>

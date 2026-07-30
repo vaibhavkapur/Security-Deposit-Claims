@@ -1,0 +1,18 @@
+.DS_Store
+
+# Claim data — not code (large and contains tenant PII)
+docs/
+docs.zip
+Claims.xlsx
+
+# Rails app (claims_app)
+claims_app/log/
+claims_app/tmp/
+claims_app/storage/
+claims_app/vendor/bundle/
+claims_app/config/master.key
+claims_app/.bundle/
+
+# Python
+__pycache__/
+*.pyc

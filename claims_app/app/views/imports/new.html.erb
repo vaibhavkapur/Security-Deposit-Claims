@@ -1,0 +1,71 @@
+<header class="page-header">
+  <h1>Security Deposit Claims</h1>
+  <% if Claim.any? %>
+    <%= button_to "Reset", import_path, method: :delete,
+          class: "clear-button",
+          data: { turbo_confirm: "Reset everything? This deletes all imported records and clears the chosen file." } %>
+  <% end %>
+</header>
+
+<% if flash[:alert] %>
+  <p class="flash-alert"><%= flash[:alert] %></p>
+<% end %>
+
+<div class="upload-grid">
+  <%= form_with url: import_path, method: :post, multipart: true, class: "upload-form" do |f| %>
+    <label class="upload-label">Spreadsheet</label>
+    <%= f.file_field :file, accept: ".xlsx", required: true %>
+    <%= f.submit "Import" %>
+  <% end %>
+
+  <%= form_with url: import_documents_path, method: :post, multipart: true, class: "upload-form" do |f| %>
+    <label class="upload-label">PDFs</label>
+    <%= f.file_field :file, accept: ".zip", required: true %>
+    <%= f.submit "Import" %>
+  <% end %>
+</div>
+
+<details class="tables-toggle" <%= "open" if @adjudication_results %>>
+  <summary>Adjudication decision</summary>
+
+  <%= form_with url: adjudicate_path, method: :post, class: "adjudication-form" do |f| %>
+    <label class="upload-label" for="tracking_numbers">Tracking numbers (comma or newline separated)</label>
+    <%= f.text_area :tracking_numbers, id: "tracking_numbers", rows: 3,
+          value: @tracking_numbers_input, placeholder: "e.g. 100234, 100251", required: true %>
+    <%= f.submit "Get decisions" %>
+  <% end %>
+
+  <% (@adjudication_results || []).each do |result| %>
+    <section class="adjudication-result">
+      <% if result[:claim].nil? %>
+        <h3>#<%= result[:tracking_number] %></h3>
+        <p class="empty-note">No claim found with this tracking number.</p>
+      <% else %>
+        <h3><%= link_to "Claim ##{result[:claim].tracking_number}", claim_path(result[:claim]) %></h3>
+        <% if result[:ran_engine] %>
+          <p class="empty-note">No prior decisions — adjudicated just now by the rules engine.</p>
+        <% end %>
+        <table>
+          <thead><tr><th>Stage</th><th>Outcome</th><th class="num">Amount</th><th>Reason</th><th>Decided by</th><th>At</th></tr></thead>
+          <tbody>
+            <% result[:decisions].each do |d| %>
+              <tr>
+                <td><%= d.stage %></td>
+                <td><%= d.outcome %></td>
+                <td class="num"><%= number_to_currency(d.amount) if d.amount %></td>
+                <td><%= d.rule_or_reason %></td>
+                <td><%= d.decided_by %></td>
+                <td><%= d.decided_at.strftime("%b %-d, %Y") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% end %>
+    </section>
+  <% end %>
+</details>
+
+<details class="tables-toggle" <%= "open" if flash[:show_tables] %>>
+  <summary>Database tables</summary>
+  <%= render partial: "table", collection: @spreadsheet_tables + @pdf_tables + @adjudication_tables, as: :table %>
+</details>

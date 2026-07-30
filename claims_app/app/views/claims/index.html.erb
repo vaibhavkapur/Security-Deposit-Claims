@@ -1,0 +1,34 @@
+<h1>Claims (<%= @claims.size %>)</h1>
+
+<p><%= link_to "← Back to import", root_path %></p>
+
+<p>
+  <% @status_counts.each do |status, count| %>
+    <span class="status-chip"><%= status %>: <%= count %></span>
+  <% end %>
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tracking #</th>
+      <th>Claim Date</th>
+      <th>Property</th>
+      <th>Status</th>
+      <th>Claim Amount</th>
+      <th>Approved</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @claims.each do |claim| %>
+      <tr>
+        <td><%= link_to claim.tracking_number, claim_path(claim) %></td>
+        <td><%= claim.claim_date %></td>
+        <td><%= claim.lease.property.full_address %></td>
+        <td><%= claim.status %></td>
+        <td class="num"><%= number_to_currency(claim.claim_amount) if claim.claim_amount %></td>
+        <td class="num"><%= number_to_currency(claim.approved_benefit_amount) if claim.approved_benefit_amount %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
