@@ -1,16 +1,24 @@
 # Security Deposit Claims
 
-Tools for importing, exploring, and adjudicating security-deposit claims. Source data is a spreadsheet of ~1,244 claims (`Claims.xlsx`) plus a folder of supporting claim documents — both are kept out of the repo (see `.gitignore`) because they contain tenant PII.
+Rails app for importing, exploring, and adjudicating security-deposit claims. Source data is a spreadsheet of ~1,244 claims (`Claims.xlsx`) plus a folder of supporting claim documents — both are kept out of the repo (see `.gitignore`) because they contain tenant PII.
 
-## What's here
+## The app (`claims_app/`)
 
-- **`claims_app/`** — Ruby on Rails app (PostgreSQL) that holds the normalized claims database and adjudication workflow. Models cover PM companies, property managers, properties, policies, leases, tenants, claims, line items, activity, adjudication decisions, and collections. Run with `bin/rails server` after `bundle install` and `bin/rails db:setup`. Requires `config/master.key` (not committed).
-- **`webapp/`** — Next.js/TypeScript front end for browsing claims and activity. Run with `npm install && npm run dev`.
-- **`db-schema.md`** — Database schema derived from the source spreadsheet, with an ER diagram and import order.
-- **`import_activity.py`, `link_activity.py`, `link_activity2.py`** — One-off Python scripts for importing claim activity data and linking it to claims.
+Ruby on Rails with PostgreSQL (`claims_app_development`). Models cover PM companies, property managers, properties, policies, leases, tenants, claims, line items, activity, adjudication decisions, and collections. Claims data is imported from the source spreadsheet via the imports workflow; claim documents are stored under `storage/documents/`.
+
+```sh
+cd claims_app
+bundle install
+bin/rails db:setup
+bin/rails server
+```
+
+Requires `config/master.key` (not committed).
 
 ## Not in the repo
 
 - `Claims.xlsx` — source claims spreadsheet
 - `docs/` / `docs.zip` — supporting claim documents (~2 GB)
 - `claims_app/storage/`, `claims_app/log/` — copies of documents and logs
+
+An earlier prototype (a Next.js frontend over a hand-built `security_deposit` Postgres DB, plus one-off Python import scripts) was removed in favor of the Rails app; it lives in the initial commit if ever needed.

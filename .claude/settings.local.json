@@ -70,7 +70,16 @@
       "Bash(gh auth *)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git symbolic-ref *)"
+      "Bash(git symbolic-ref *)",
+      "Bash(awk '{print $4}')",
+      "Bash(xargs -I{} du -k \"{}\")",
+      "Bash(git commit -m 'Initial commit: claims Rails app, Next.js webapp, import scripts, schema docs *)",
+      "Bash(gh repo *)",
+      "Bash(gh api *)",
+      "Bash(git --git-dir=/Users/vaibhavkapur/.git log --oneline --all -- \"Documents/Security Deposit\")",
+      "Bash(git rm *)",
+      "Bash(git commit -q -m 'Remove superseded Next.js prototype and import scripts; Rails app is the app *)",
+      "Bash(git push *)"
     ]
   }
 }
