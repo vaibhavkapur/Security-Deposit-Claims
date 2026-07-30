@@ -1,5 +1,5 @@
-# Stage 1 + Stage 2 of the adjudication engine, using only data already in
-# the database (no documents required).
+# Stage 1 of the adjudication engine, using only data already in the
+# database (no documents required).
 #
 # Rules are derived from the historical decline reasons and payout patterns
 # in Claims.xlsx:
@@ -8,43 +8,32 @@
 #   - approved amounts were min(claim_amount, max_benefit), paid in full for
 #     evictions and trimmed after line-item review for move-outs
 #
-# Decision flow per claim:
-#   eligibility: decline (hard rule failed) | refer (can't auto-decide) | approve
-#   amount:      propose min(claim_amount, max_benefit)
-#   final:       approve at cap for evictions; refer move-outs to line-item review
-#
-# Every decision is appended to adjudication_decisions; nothing is updated.
+# Each claim gets exactly one decision row (approve | decline | refer | hold).
+# This engine writes the first ruling; LineItemReview overwrites it with a
+# refined one when extracted line items are available.
 class EligibilityEngine
-  VERSION = "rules-engine v1".freeze
-
   Result = Struct.new(:claim, :outcome, :amount, :reasons, keyword_init: true)
 
-  def initialize(claim, decided_by: VERSION)
+  def initialize(claim)
     @claim = claim
-    @decided_by = decided_by
   end
 
   def call
     referrals = referral_reasons
     if referrals.any?
-      return record("eligibility", "refer", reasons: referrals)
+      return record("refer", reasons: referrals)
     end
-
-    record("eligibility", "approve", reasons: ["all eligibility rules passed"])
 
     if @claim.termination_type == "Eviction"
       # 87% of paid evictions received exactly max_benefit, regardless of the
       # claimed amount (lost rent accrues past the claim figure).
-      payout = @claim.policy.max_benefit
-      record("amount", "approve", amount: payout, reasons: ["eviction: full max benefit"])
-      record("final", "approve", amount: payout,
+      record("approve", amount: @claim.policy.max_benefit,
              reasons: ["eviction: historically paid full max benefit (87% exact)"])
     else
       cap = [@claim.claim_amount, @claim.policy.max_benefit].min
-      record("amount", "approve", amount: cap,
-             reasons: ["cap = min(claim #{@claim.claim_amount}, max benefit #{@claim.policy.max_benefit})"])
-      record("final", "refer", amount: cap,
-             reasons: ["move-out: line-item review required before payout (historical median 91% of cap)"])
+      record("refer", amount: cap,
+             reasons: ["move-out: line-item review required before payout " \
+                       "(cap = min(claim #{@claim.claim_amount}, max benefit #{@claim.policy.max_benefit}))"])
     end
   end
 
@@ -73,15 +62,9 @@ class EligibilityEngine
     Claim.where(lease_id: @claim.lease_id).where("id < ?", @claim.id).first
   end
 
-  def record(stage, outcome, reasons:, amount: nil)
-    AdjudicationDecision.create!(
-      claim: @claim,
-      stage: stage,
-      decided_by: @decided_by,
-      outcome: outcome,
-      amount: amount,
-      rule_or_reason: reasons.join("; ")
-    )
+  def record(outcome, reasons:, amount: nil)
+    decision = AdjudicationDecision.find_or_initialize_by(claim: @claim)
+    decision.update!(outcome: outcome, amount: amount, reason: reasons.join("; "))
     Result.new(claim: @claim, outcome: outcome, amount: amount, reasons: reasons)
   end
 end

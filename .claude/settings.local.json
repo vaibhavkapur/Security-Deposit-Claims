@@ -79,7 +79,22 @@
       "Bash(git --git-dir=/Users/vaibhavkapur/.git log --oneline --all -- \"Documents/Security Deposit\")",
       "Bash(git rm *)",
       "Bash(git commit -q -m 'Remove superseded Next.js prototype and import scripts; Rails app is the app *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(bundle check *)",
+      "Bash(bin/rails server *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(break)",
+      "Bash(lsof -i :3000 -sTCP:LISTEN)",
+      "Bash(bin/rails generate *)",
+      "Bash(bin/rails test *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(perl -0pi -e 's/\\\\n    flash\\\\[:show_tables\\\\] = true\\\\n    redirect_to root_path/\\\\n    redirect_to root_path/g' app/controllers/imports_controller.rb)",
+      "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(awk 'NR>332715 && \\(/Completed/ || /NoMethodError/ || /Started/\\)' log/development.log)",
+      "Bash(kill -9 37248)",
+      "Bash(git -C \"/Users/vaibhavkapur/Documents/Security Deposit\" status)",
+      "Bash(git -C \"/Users/vaibhavkapur/Documents/Security Deposit\" remote -v)",
+      "Bash(git *)"
     ]
   }
 }

@@ -10,8 +10,7 @@ require "base64"
 # Charges are positive amounts, credits/payments negative. Dispositions are
 # left "pending" for the adjudication engine (Stage 2) to classify.
 class DocumentExtraction
-  EXTRACTOR_VERSION = "v1/claude-opus-5".freeze
-  MODEL = :"claude-opus-5"
+  MODEL = :"claude-haiku-4-5-20251001"
 
   EXTRACTABLE_DOC_TYPES = %w[
     ledger move_out_statement sdi_form itemization invoice deposit_disposition
@@ -76,7 +75,7 @@ class DocumentExtraction
     end
 
     source = content_block
-    return unless source # mark() already called
+    return @document unless source # mark() already called
 
     response = client.messages.create(
       model: MODEL,
@@ -111,14 +110,14 @@ class DocumentExtraction
       @document.update!(
         extraction_status: "extracted",
         extracted_json: extracted,
-        extracted_at: Time.current,
-        extractor_version: EXTRACTOR_VERSION,
         extraction_error: nil
       )
     end
     @document
   rescue Anthropic::Errors::APIStatusError => e
     mark("failed", error: "#{e.class.name.demodulize}: #{e.message.to_s.truncate(200)}")
+  rescue ActiveRecord::RecordInvalid => e
+    mark("failed", error: "invalid extracted data: #{e.message.to_s.truncate(200)}")
   end
 
   private
@@ -148,8 +147,7 @@ class DocumentExtraction
   def mark(status, error: nil)
     @document.update!(
       extraction_status: status,
-      extraction_error: error,
-      extractor_version: EXTRACTOR_VERSION
+      extraction_error: error
     )
     @document
   end

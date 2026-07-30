@@ -7,7 +7,7 @@ class DatabaseOverview
   ADJUDICATION_MODELS = [AdjudicationDecision].freeze
   MODELS = (SPREADSHEET_MODELS + PDF_MODELS + ADJUDICATION_MODELS).freeze
   SAMPLE_ROWS = 5
-  HIDDEN_COLUMNS = { AdjudicationDecision => %w[decided_at] }.freeze
+  HIDDEN_COLUMNS = {}.freeze
 
   # Wipe all imported data and reset ID sequences; table structure stays.
   def self.clear!

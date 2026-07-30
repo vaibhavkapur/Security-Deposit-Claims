@@ -12,6 +12,6 @@ class ClaimsController < ApplicationController
     @activities = @claim.claim_activities.chronological
     @documents = @claim.documents.order(:doc_type, :original_name)
     @line_items = @claim.claim_line_items.includes(:document).order(:txn_date, :id)
-    @decisions = @claim.adjudication_decisions.order(:id)
+    @decision = @claim.adjudication_decision
   end
 end

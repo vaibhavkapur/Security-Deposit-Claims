@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resource :import, only: [:new, :create, :destroy]
   post "import/documents", to: "imports#create_documents", as: :import_documents
   post "adjudicate", to: "imports#adjudicate", as: :adjudicate
+  post "extract", to: "imports#extract", as: :extract
   resources :claims, only: [:index, :show]
   get "activities/unlinked", to: "activities#unlinked", as: :unlinked_activities
 

@@ -5,7 +5,7 @@ class Claim < ApplicationRecord
   has_many :claim_activities, dependent: :destroy
   has_many :documents, dependent: :destroy
   has_many :claim_line_items, dependent: :destroy
-  has_many :adjudication_decisions, dependent: :destroy
+  has_one :adjudication_decision, dependent: :destroy
 
   validates :tracking_number, presence: true, uniqueness: true
 end

@@ -10,21 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_30_000006) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_30_234151) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "adjudication_decisions", force: :cascade do |t|
     t.bigint "claim_id", null: false
-    t.text "stage", null: false
-    t.text "decided_by", null: false
     t.text "outcome", null: false
     t.decimal "amount", precision: 10, scale: 2
-    t.text "rule_or_reason", null: false
-    t.timestamptz "decided_at", default: -> { "now()" }, null: false
+    t.text "reason", null: false
     t.datetime "created_at", null: false
-    t.index ["claim_id", "stage"], name: "index_adjudication_decisions_on_claim_id_and_stage"
-    t.index ["claim_id"], name: "index_adjudication_decisions_on_claim_id"
+    t.index ["claim_id"], name: "index_adjudication_decisions_on_claim_id", unique: true
     t.index ["outcome"], name: "index_adjudication_decisions_on_outcome"
   end
 
@@ -121,8 +117,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_30_000006) do
     t.datetime "updated_at", null: false
     t.text "extraction_status", default: "pending", null: false
     t.jsonb "extracted_json"
-    t.timestamptz "extracted_at"
-    t.text "extractor_version"
     t.text "extraction_error"
     t.index ["claim_id"], name: "index_documents_on_claim_id"
     t.index ["content_hash"], name: "index_documents_on_content_hash", unique: true

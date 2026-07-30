@@ -25,7 +25,6 @@ class ImportsController < ApplicationController
     ClaimsImport.new(file.tempfile.path).call
     CommentsImport.new(file.tempfile.path).call
 
-    flash[:show_tables] = true
     redirect_to root_path
   end
 
@@ -41,8 +40,26 @@ class ImportsController < ApplicationController
 
     DocumentsImport.new(file.tempfile.path).call
 
-    flash[:show_tables] = true
     redirect_to root_path
+  end
+
+  # Runs Claude extraction (DocumentExtraction) over every pending extractable
+  # document — one API call per document, ExtractionBatch::THREADS at a time.
+  def extract
+    if ENV["ANTHROPIC_API_KEY"].blank?
+      redirect_to root_path, alert: "ANTHROPIC_API_KEY is not set — export it and restart the server." and return
+    end
+
+    scope = Document.where(extraction_status: "pending",
+                           doc_type: DocumentExtraction::EXTRACTABLE_DOC_TYPES).order(:id)
+    if scope.none?
+      redirect_to root_path, alert: "No pending extractable documents." and return
+    end
+
+    documents = ExtractionBatch.call(scope)
+    summary = documents.map(&:extraction_status).tally
+                       .map { |status, count| "#{count} #{status.humanize.downcase}" }.join(", ")
+    redirect_to root_path, notice: "Extraction finished: #{summary}. #{ClaimLineItem.count} line items total."
   end
 
   def destroy
@@ -60,17 +77,11 @@ class ImportsController < ApplicationController
 
   # Looks up a claim by tracking number and returns its adjudication decisions,
   # running the rules engine first if the claim has never been adjudicated.
+  # Read-only lookup: decisions are pre-computed for every claim (see
+  # AdjudicationBatch), so the form only fetches what's already in the DB.
   def adjudicate_one(tracking_number)
-    claim = Claim.includes(:policy, :lease, :claim_line_items).find_by(tracking_number: tracking_number)
-    return { tracking_number: tracking_number, claim: nil, decisions: [], ran_engine: false } if claim.nil?
-
-    ran_engine = claim.adjudication_decisions.none?
-    if ran_engine
-      EligibilityEngine.new(claim).call
-      LineItemReview.new(claim).call if claim.claim_line_items.any?
-    end
-
+    claim = Claim.find_by(tracking_number: tracking_number)
     { tracking_number: tracking_number, claim: claim,
-      decisions: claim.adjudication_decisions.order(:id).to_a, ran_engine: ran_engine }
+      decision: claim&.adjudication_decision }
   end
 end

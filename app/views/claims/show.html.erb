@@ -106,23 +106,18 @@
   </details>
 <% end %>
 
-<% if @decisions.any? %>
-  <h2>Adjudication</h2>
-  <table>
-    <thead><tr><th>Stage</th><th>Outcome</th><th class="num">Amount</th><th>Reason</th><th>Decided by</th><th>At</th></tr></thead>
-    <tbody>
-      <% @decisions.each do |d| %>
-        <tr>
-          <td><%= d.stage %></td>
-          <td><%= d.outcome %></td>
-          <td class="num"><%= number_to_currency(d.amount) if d.amount %></td>
-          <td><%= d.rule_or_reason %></td>
-          <td><%= d.decided_by %></td>
-          <td><%= d.decided_at.strftime("%b %-d, %Y") %></td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
+<% if @decision %>
+  <h2>
+    Adjudication
+    <% label = { "approve" => "Approve", "decline" => "Deny", "refer" => "Refer", "hold" => "Hold" }.fetch(@decision.outcome, @decision.outcome) %>
+    <span class="decision-badge decision-badge-<%= @decision.outcome %>"><%= label %></span>
+  </h2>
+  <ul class="decision-detail">
+    <% if @decision.amount %>
+      <li>Amount: <%= number_to_currency(@decision.amount) %></li>
+    <% end %>
+    <li>Reason: <%= @decision.reason %></li>
+  </ul>
 <% end %>
 
 <h2>Activity<% if @activities.any? %> (<%= @activities.size %>)<% end %></h2>

@@ -13,8 +13,6 @@
 # decline. The ledger's payment rows let us flag it — flagged claims are
 # referred (not auto-declined) since scanned ledgers may be incomplete.
 class LineItemReview
-  VERSION = "rules-engine v1/stage2".freeze
-
   COVERAGE = {
     "unpaid_rent" => "allowed",
     "damage" => "allowed",
@@ -45,9 +43,8 @@ class LineItemReview
 
   FIRST_MONTH_WINDOW_DAYS = 45
 
-  def initialize(claim, decided_by: VERSION)
+  def initialize(claim)
     @claim = claim
-    @decided_by = decided_by
     @items = claim.claim_line_items.reload.to_a
   end
 
@@ -57,7 +54,7 @@ class LineItemReview
     classify_items
 
     if (flag = first_month_default_flag)
-      return record("final", "refer", reasons: [flag])
+      return record("refer", reasons: [flag])
     end
 
     allowed = @items.select { |i| i.disposition == "allowed" && i.amount.positive? }.sum(&:amount)
@@ -72,12 +69,10 @@ class LineItemReview
                 "cap #{cap&.to_f || 'none'} -> payout #{payout.to_f.round(2)}"
 
     if review_total.positive?
-      record("amount", "refer", amount: payout,
+      record("refer", amount: payout,
              reasons: ["#{breakdown}; #{review_total.to_f.round(2)} in charges need review"])
     else
-      record("amount", "approve", amount: payout, reasons: [breakdown])
-      record("final", "approve", amount: payout,
-             reasons: ["all line items classified; payout from allowed charges"])
+      record("approve", amount: payout, reasons: [breakdown])
     end
   end
 
@@ -110,15 +105,10 @@ class LineItemReview
       "#{paid.to_f.round(2)} received in first #{FIRST_MONTH_WINDOW_DAYS} days (rent #{rent.to_f.round(2)})"
   end
 
-  def record(stage, outcome, reasons:, amount: nil)
-    AdjudicationDecision.create!(
-      claim: @claim,
-      stage: stage,
-      decided_by: @decided_by,
-      outcome: outcome,
-      amount: amount,
-      rule_or_reason: reasons.join("; ")
-    )
+  # Overwrites the claim's single decision row with this engine's refined ruling.
+  def record(outcome, reasons:, amount: nil)
+    decision = AdjudicationDecision.find_or_initialize_by(claim: @claim)
+    decision.update!(outcome: outcome, amount: amount, reason: reasons.join("; "))
     EligibilityEngine::Result.new(claim: @claim, outcome: outcome, amount: amount, reasons: reasons)
   end
 end

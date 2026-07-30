@@ -10,6 +10,9 @@
 <% if flash[:alert] %>
   <p class="flash-alert"><%= flash[:alert] %></p>
 <% end %>
+<% if flash[:notice] %>
+  <p class="flash-notice"><%= flash[:notice] %></p>
+<% end %>
 
 <div class="upload-grid">
   <%= form_with url: import_path, method: :post, multipart: true, class: "upload-form" do |f| %>
@@ -25,8 +28,28 @@
   <% end %>
 </div>
 
-<details class="tables-toggle" <%= "open" if @adjudication_results %>>
-  <summary>Adjudication decision</summary>
+<section class="page-section">
+  <h2>Database tables</h2>
+  <div class="table-group">
+    <%= render partial: "table", collection: @spreadsheet_tables, as: :table %>
+  </div>
+
+  <div class="group-divider">
+    <%= form_with url: extract_path, method: :post do |f| %>
+      <%= f.submit "Inference", class: "extract-button" %>
+    <% end %>
+  </div>
+
+  <div class="table-group">
+    <%= render partial: "table", collection: @pdf_tables, as: :table %>
+  </div>
+  <div class="table-group">
+    <%= render partial: "table", collection: @adjudication_tables, as: :table %>
+  </div>
+</section>
+
+<section class="page-section">
+  <h2>Adjudication decision</h2>
 
   <%= form_with url: adjudicate_path, method: :post, class: "adjudication-form" do |f| %>
     <label class="upload-label" for="tracking_numbers">Tracking numbers (comma or newline separated)</label>
@@ -41,31 +64,25 @@
         <h3>#<%= result[:tracking_number] %></h3>
         <p class="empty-note">No claim found with this tracking number.</p>
       <% else %>
-        <h3><%= link_to "Claim ##{result[:claim].tracking_number}", claim_path(result[:claim]) %></h3>
-        <% if result[:ran_engine] %>
-          <p class="empty-note">No prior decisions — adjudicated just now by the rules engine.</p>
-        <% end %>
-        <table>
-          <thead><tr><th>Stage</th><th>Outcome</th><th class="num">Amount</th><th>Reason</th><th>Decided by</th><th>At</th></tr></thead>
-          <tbody>
-            <% result[:decisions].each do |d| %>
-              <tr>
-                <td><%= d.stage %></td>
-                <td><%= d.outcome %></td>
-                <td class="num"><%= number_to_currency(d.amount) if d.amount %></td>
-                <td><%= d.rule_or_reason %></td>
-                <td><%= d.decided_by %></td>
-                <td><%= d.decided_at.strftime("%b %-d, %Y") %></td>
-              </tr>
+        <% decision = result[:decision] %>
+        <h3>
+          <%= link_to "Claim ##{result[:claim].tracking_number}", claim_path(result[:claim]) %>
+          <% if decision %>
+            <% label = { "approve" => "Approve", "decline" => "Deny", "refer" => "Refer", "hold" => "Hold" }.fetch(decision.outcome, decision.outcome) %>
+            <span class="decision-badge decision-badge-<%= decision.outcome %>"><%= label %></span>
+          <% end %>
+        </h3>
+        <% if decision.nil? %>
+          <p class="empty-note">No decisions on file for this claim.</p>
+        <% else %>
+          <ul class="decision-detail">
+            <% if decision.amount %>
+              <li>Amount: <%= number_to_currency(decision.amount) %></li>
             <% end %>
-          </tbody>
-        </table>
+            <li>Reason: <%= decision.reason %></li>
+          </ul>
+        <% end %>
       <% end %>
     </section>
   <% end %>
-</details>
-
-<details class="tables-toggle" <%= "open" if flash[:show_tables] %>>
-  <summary>Database tables</summary>
-  <%= render partial: "table", collection: @spreadsheet_tables + @pdf_tables + @adjudication_tables, as: :table %>
-</details>
+</section>
