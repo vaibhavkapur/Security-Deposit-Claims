@@ -77,6 +77,7 @@ class DocumentsImport
     File.binwrite(full_path, bytes)
 
     doc_type = classify(basename)
+    extractable = DocumentExtraction::EXTRACTABLE_DOC_TYPES.include?(doc_type)
     Document.create!(
       claim_id: claim_id,
       original_name: basename,
@@ -86,7 +87,8 @@ class DocumentsImport
       byte_size: bytes.bytesize,
       doc_type: doc_type,
       doc_type_source: doc_type == "other" ? nil : "filename",
-      storage_key: storage_key
+      storage_key: storage_key,
+      extraction_status: extractable ? "pending" : "not_extractable"
     )
     result.created += 1
   rescue StandardError => e
