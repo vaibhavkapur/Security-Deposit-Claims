@@ -8,7 +8,8 @@
 #   - approved amounts were min(claim_amount, max_benefit), paid in full for
 #     evictions and trimmed after line-item review for move-outs
 #
-# Each claim gets exactly one decision row (approve | decline | refer | hold).
+# Each claim gets exactly one binary decision row (approve | decline).
+# Conservative rule: anything not affirmatively supported is declined.
 # This engine writes the first ruling; LineItemReview overwrites it with a
 # refined one when extracted line items are available.
 class EligibilityEngine
@@ -19,9 +20,9 @@ class EligibilityEngine
   end
 
   def call
-    referrals = referral_reasons
-    if referrals.any?
-      return record("refer", reasons: referrals)
+    problems = decline_reasons
+    if problems.any?
+      return record("decline", reasons: problems)
     end
 
     if @claim.termination_type == "Eviction"
@@ -30,20 +31,21 @@ class EligibilityEngine
       record("approve", amount: @claim.policy.max_benefit,
              reasons: ["eviction: historically paid full max benefit (87% exact)"])
     else
-      cap = [@claim.claim_amount, @claim.policy.max_benefit].min
-      record("refer", amount: cap,
-             reasons: ["move-out: line-item review required before payout " \
-                       "(cap = min(claim #{@claim.claim_amount}, max benefit #{@claim.policy.max_benefit}))"])
+      # Move-out charges must be supported by extracted line items;
+      # LineItemReview overwrites this when they exist.
+      record("decline",
+             reasons: ["move-out charges unverified — no extracted line items " \
+                       "(claim #{@claim.claim_amount}, max benefit #{@claim.policy.max_benefit})"])
     end
   end
 
   private
 
-  def referral_reasons
+  def decline_reasons
     reasons = []
     if (dup = duplicate_of)
       # History shows some same-lease pairs were both paid (roommates,
-      # re-filings), so a suspected duplicate goes to a human, not auto-decline.
+      # re-filings), but binary conservative policy declines suspected dupes.
       reasons << "possible duplicate of claim ##{dup.tracking_number} (same lease)"
     end
     reasons << "no policy on file" if @claim.policy.nil?

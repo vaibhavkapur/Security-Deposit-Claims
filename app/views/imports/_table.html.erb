@@ -1,7 +1,13 @@
 <section class="table-section">
   <h3 class="table-heading">
     <code><%= table[:name] %></code>
-    <span class="row-count"><%= number_with_delimiter(table[:count]) %> rows</span>
+    <span class="row-count">
+      <% if table[:total] && table[:total] != table[:count] %>
+        <%= number_with_delimiter(table[:count]) %> extracted of <%= number_with_delimiter(table[:total]) %> rows
+      <% else %>
+        <%= number_with_delimiter(table[:count]) %> rows
+      <% end %>
+    </span>
   </h3>
 
   <% if table[:count].zero? %>
@@ -20,7 +26,17 @@
           <% table[:rows].each do |record| %>
             <tr>
               <% table[:columns].each do |col| %>
-                <td><%= record[col].to_s.truncate(40) %></td>
+                <% value = record[col] %>
+                <% if value.is_a?(Hash) || value.is_a?(Array) %>
+                  <td>
+                    <details class="json-cell">
+                      <summary><%= json_for_display(value).to_json.truncate(40) %></summary>
+                      <pre><%= JSON.pretty_generate(json_for_display(value)) %></pre>
+                    </details>
+                  </td>
+                <% else %>
+                  <td><%= value.to_s.truncate(40) %></td>
+                <% end %>
               <% end %>
             </tr>
           <% end %>

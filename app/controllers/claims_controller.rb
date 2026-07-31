@@ -10,7 +10,7 @@ class ClaimsController < ApplicationController
                             lease: [:property, :tenants, { property_manager: :pm_company }])
                   .find(params[:id])
     @activities = @claim.claim_activities.chronological
-    @documents = @claim.documents.order(:doc_type, :original_name)
+    @documents = @claim.documents.where.not(extracted_json: nil).order(:doc_type, :original_name)
     @line_items = @claim.claim_line_items.includes(:document).order(:txn_date, :id)
     @decision = @claim.adjudication_decision
   end

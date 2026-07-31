@@ -5,7 +5,7 @@
 # the thread count (see config/database.yml) since each worker holds a
 # connection while its API call is in flight.
 class ExtractionBatch
-  THREADS = 16
+  THREADS = 64
 
   def self.call(scope, threads: THREADS)
     documents = scope.to_a

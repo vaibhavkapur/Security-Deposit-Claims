@@ -32,12 +32,44 @@ class DatabaseOverview
 
   def self.tables(models = MODELS)
     models.map do |model|
+      scope = display_scope(model)
       {
         name: model.table_name,
-        count: model.count,
+        count: scope.count,
+        total: model.count,
         columns: model.column_names - %w[created_at updated_at] - HIDDEN_COLUMNS.fetch(model, []),
-        rows: model.order(:id).limit(SAMPLE_ROWS)
+        rows: sample_rows(model, scope)
       }
     end
+  end
+
+  # Before extraction runs, show every imported document; once any document
+  # has extracted content, show only those (the extraction is the point).
+  def self.display_scope(model)
+    return model.all unless model == Document
+
+    extracted = Document.where.not(extracted_json: nil)
+    extracted.exists? ? extracted : Document.all
+  end
+
+  # First-N-by-id makes adjudication_decisions look monotonous (long runs of
+  # identical declines), so sample it for variety: dedupe by outcome + reason
+  # shape, then alternate outcomes.
+  def self.sample_rows(model, scope)
+    return scope.order(:id).limit(SAMPLE_ROWS) unless model == AdjudicationDecision
+
+    AdjudicationDecision.find_by_sql(<<~SQL)
+      WITH distinct_reasons AS (
+        SELECT DISTINCT ON (outcome, left(reason, 40)) *
+        FROM adjudication_decisions
+        ORDER BY outcome, left(reason, 40), id
+      )
+      SELECT * FROM (
+        SELECT *, row_number() OVER (PARTITION BY outcome ORDER BY id) AS rn
+        FROM distinct_reasons
+      ) ranked
+      ORDER BY rn, outcome
+      LIMIT #{SAMPLE_ROWS}
+    SQL
   end
 end

@@ -44,14 +44,14 @@ class ImportsController < ApplicationController
   end
 
   # Runs Claude extraction (DocumentExtraction) over every pending extractable
-  # document — one API call per document, ExtractionBatch::THREADS at a time.
+  # document — one API call per document, ExtractionBatch::THREADS at a time —
+  # then Stage 2 adjudication, so one click takes claims from PDFs to decisions.
   def extract
     if ENV["ANTHROPIC_API_KEY"].blank?
       redirect_to root_path, alert: "ANTHROPIC_API_KEY is not set — export it and restart the server." and return
     end
 
-    scope = Document.where(extraction_status: "pending",
-                           doc_type: DocumentExtraction::EXTRACTABLE_DOC_TYPES).order(:id)
+    scope = Document.pending_extraction.order(:id)
     if scope.none?
       redirect_to root_path, alert: "No pending extractable documents." and return
     end
@@ -59,7 +59,17 @@ class ImportsController < ApplicationController
     documents = ExtractionBatch.call(scope)
     summary = documents.map(&:extraction_status).tally
                        .map { |status, count| "#{count} #{status.humanize.downcase}" }.join(", ")
-    redirect_to root_path, notice: "Extraction finished: #{summary}. #{ClaimLineItem.count} line items total."
+
+    decided = AdjudicationBatch.call
+    # AdjudicationBatch skips already-decided claims, so re-review the ones
+    # this batch added line items to — their old decisions are now stale.
+    Claim.where(id: documents.map(&:claim_id).uniq)
+         .includes(:policy, :lease, :claim_line_items)
+         .each { |claim| LineItemReview.new(claim).call }
+
+    redirect_to root_path,
+                notice: "Extraction finished: #{summary}. #{ClaimLineItem.count} line items total. " \
+                        "Stage 2: #{decided} newly adjudicated, #{AdjudicationDecision.count} decisions overall."
   end
 
   def destroy

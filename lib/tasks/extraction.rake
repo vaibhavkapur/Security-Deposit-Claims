@@ -4,25 +4,23 @@ namespace :extraction do
     abort "ANTHROPIC_API_KEY is not set — export it before running extraction." if ENV["ANTHROPIC_API_KEY"].blank?
 
     limit = ENV.fetch("LIMIT", "10")
-    scope = Document.where(extraction_status: "pending",
-                           doc_type: DocumentExtraction::EXTRACTABLE_DOC_TYPES)
-                    .order(:id)
+    scope = Document.pending_extraction.order(:id)
     scope = scope.limit(Integer(limit)) unless limit == "all"
 
     total = scope.count
-    puts "Extracting #{total} documents (of #{Document.where(extraction_status: 'pending', doc_type: DocumentExtraction::EXTRACTABLE_DOC_TYPES).count} pending extractable)..."
+    puts "Extracting #{total} documents (of #{Document.pending_extraction.count} pending extractable)..."
 
     scope.each_with_index do |document, i|
       DocumentExtraction.new(document).call
       document.reload
       items = ClaimLineItem.where(document_id: document.id).count
-      puts format("[%d/%d] doc %d (%s, claim #%s): %s%s",
+      puts format("[%d/%d] doc %d (%s, claim #%s): %s",
                   i + 1, total, document.id, document.doc_type,
-                  document.claim.tracking_number, document.extraction_status,
-                  document.extraction_status == "extracted" ? " — #{items} line items" : " — #{document.extraction_error}")
+                  document.claim.tracking_number,
+                  document.extracted? ? "extracted — #{items} line items" : "not extracted (see log)")
     end
 
-    puts "\nStatus summary: #{Document.group(:extraction_status).count}"
+    puts "\nExtracted: #{Document.where.not(extracted_json: nil).count}, pending extractable: #{Document.pending_extraction.count}"
     puts "Line items total: #{ClaimLineItem.count}"
   end
 end

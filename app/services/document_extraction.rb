@@ -7,8 +7,9 @@ require "base64"
 # invoices, deposit dispositions) are sent to Claude as PDFs/images; the model
 # returns the itemized charges through a forced tool call, which lands in
 # documents.extracted_json and is promoted into claim_line_items rows.
-# Charges are positive amounts, credits/payments negative. Dispositions are
-# left "pending" for the adjudication engine (Stage 2) to classify.
+# Charges are positive amounts, credits/payments negative. Dispositions start
+# "denied" (the column default) until the adjudication engine (Stage 2)
+# classifies them allowed/denied.
 class DocumentExtraction
   MODEL = :"claude-haiku-4-5-20251001"
 
@@ -107,17 +108,13 @@ class DocumentExtraction
           amount: item["amount"]
         )
       end
-      @document.update!(
-        extraction_status: "extracted",
-        extracted_json: extracted,
-        extraction_error: nil
-      )
+      @document.update!(extracted_json: extracted)
     end
     @document
   rescue Anthropic::Errors::APIStatusError => e
-    mark("failed", error: "#{e.class.name.demodulize}: #{e.message.to_s.truncate(200)}")
+    skip("#{e.class.name.demodulize}: #{e.message.to_s.truncate(200)}")
   rescue ActiveRecord::RecordInvalid => e
-    mark("failed", error: "invalid extracted data: #{e.message.to_s.truncate(200)}")
+    skip("invalid extracted data: #{e.message.to_s.truncate(200)}")
   end
 
   private
@@ -128,9 +125,9 @@ class DocumentExtraction
 
   def content_block
     path = @document.storage_path
-    return mark("failed", error: "file missing from storage") && nil unless File.exist?(path)
+    return skip("file missing from storage") && nil unless File.exist?(path)
     if File.size(path) > MAX_FILE_BYTES
-      return mark("not_extractable", error: "file exceeds #{MAX_FILE_BYTES / 1_048_576}MB") && nil
+      return skip("file exceeds #{MAX_FILE_BYTES / 1_048_576}MB") && nil
     end
 
     data = Base64.strict_encode64(File.binread(path))
@@ -140,15 +137,12 @@ class DocumentExtraction
     when "image/jpeg", "image/png", "image/gif", "image/webp"
       {type: "image", source: {type: "base64", media_type: @document.mime_type, data: data}}
     else
-      mark("not_extractable", error: "unsupported mime type #{@document.mime_type}") && nil
+      skip("unsupported mime type #{@document.mime_type}") && nil
     end
   end
 
-  def mark(status, error: nil)
-    @document.update!(
-      extraction_status: status,
-      extraction_error: error
-    )
+  def skip(reason)
+    Rails.logger.warn("extraction: document #{@document.id} skipped — #{reason}")
     @document
   end
 

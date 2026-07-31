@@ -5,13 +5,13 @@ namespace :adjudicate do
     abort "No claims have extracted line items yet — run extraction:run first." if claim_ids.empty?
 
     puts "Running Stage 2 on #{claim_ids.size} claims with line items..."
-    exact = close = differ = referred = 0
+    exact = close = differ = declined = 0
     Claim.where(id: claim_ids).includes(:policy, :lease, :claim_line_items).find_each do |claim|
       result = LineItemReview.new(claim).call
       next if result.nil?
 
-      if result.outcome == "refer"
-        referred += 1
+      if result.outcome == "decline"
+        declined += 1
       elsif claim.approved_benefit_amount && result.amount
         diff = (claim.approved_benefit_amount - result.amount).abs
         if diff < 0.01 then exact += 1
@@ -21,6 +21,6 @@ namespace :adjudicate do
       end
     end
 
-    puts "auto-decided vs history: #{exact} exact, #{close} within 10%, #{differ} differ; #{referred} referred"
+    puts "auto-decided vs history: #{exact} exact, #{close} within 10%, #{differ} differ; #{declined} declined"
   end
 end

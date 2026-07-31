@@ -62,19 +62,15 @@
   <details class="group-toggle">
     <summary>PDFs</summary>
 
-    <h2>Documents (<%= @documents.size %>)</h2>
+    <h2>Extracted Documents (<%= @documents.size %>)</h2>
     <table>
-      <thead><tr><th>File</th><th>Type</th><th>Size</th><th>Extraction</th></tr></thead>
+      <thead><tr><th>File</th><th>Type</th><th>Size</th></tr></thead>
       <tbody>
         <% @documents.each do |doc| %>
           <tr>
             <td><%= doc.original_name %></td>
             <td><%= doc.doc_type&.humanize %></td>
             <td class="num"><%= number_to_human_size(doc.byte_size) %></td>
-            <td>
-              <%= doc.extraction_status %>
-              <% if doc.extraction_error %><span class="empty-note">— <%= doc.extraction_error %></span><% end %>
-            </td>
           </tr>
         <% end %>
       </tbody>
@@ -109,7 +105,7 @@
 <% if @decision %>
   <h2>
     Adjudication
-    <% label = { "approve" => "Approve", "decline" => "Deny", "refer" => "Refer", "hold" => "Hold" }.fetch(@decision.outcome, @decision.outcome) %>
+    <% label = { "approve" => "Allow", "decline" => "Deny" }.fetch(@decision.outcome, @decision.outcome) %>
     <span class="decision-badge decision-badge-<%= @decision.outcome %>"><%= label %></span>
   </h2>
   <ul class="decision-detail">

@@ -68,7 +68,7 @@
         <h3>
           <%= link_to "Claim ##{result[:claim].tracking_number}", claim_path(result[:claim]) %>
           <% if decision %>
-            <% label = { "approve" => "Approve", "decline" => "Deny", "refer" => "Refer", "hold" => "Hold" }.fetch(decision.outcome, decision.outcome) %>
+            <% label = { "approve" => "Allow", "decline" => "Deny" }.fetch(decision.outcome, decision.outcome) %>
             <span class="decision-badge decision-badge-<%= decision.outcome %>"><%= label %></span>
           <% end %>
         </h3>

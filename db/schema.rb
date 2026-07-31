@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_30_234151) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_31_065531) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -46,8 +46,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_30_234151) do
     t.text "category", null: false
     t.text "description", null: false
     t.decimal "amount", precision: 10, scale: 2, null: false
-    t.text "disposition", default: "pending", null: false
-    t.text "disposition_reason"
+    t.text "disposition", default: "denied", null: false
+    t.text "disposition_reason", default: "awaiting adjudication — denied by default", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["claim_id", "disposition"], name: "index_claim_line_items_on_claim_id_and_disposition"
@@ -115,13 +115,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_30_234151) do
     t.text "storage_key", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "extraction_status", default: "pending", null: false
     t.jsonb "extracted_json"
-    t.text "extraction_error"
     t.index ["claim_id"], name: "index_documents_on_claim_id"
     t.index ["content_hash"], name: "index_documents_on_content_hash", unique: true
     t.index ["doc_type"], name: "index_documents_on_doc_type"
-    t.index ["extraction_status"], name: "index_documents_on_extraction_status"
   end
 
   create_table "leases", force: :cascade do |t|

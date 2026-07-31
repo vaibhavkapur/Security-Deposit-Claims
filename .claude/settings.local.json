@@ -94,7 +94,21 @@
       "Bash(kill -9 37248)",
       "Bash(git -C \"/Users/vaibhavkapur/Documents/Security Deposit\" status)",
       "Bash(git -C \"/Users/vaibhavkapur/Documents/Security Deposit\" remote -v)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(bin/rails routes *)",
+      "Bash(printenv RAILS_MAX_THREADS)",
+      "Bash(echo \"check-ignore exit: $?\")",
+      "Bash(ps -p 4000 -o pid,ppid,etime,command)",
+      "Bash(grep -n 'extraction_status\" = \\\\$2' log/development.log)",
+      "Bash(awk 'NR==1{first=$0} {last=$0; n++} END{print \"docs:\", n, \"first:\", first, \"last:\", last}')",
+      "Bash(pkill -f \"puma.*Security\")",
+      "Bash(curl -s -o /dev/null -w \"GET / -> %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"claims/666 -> %{http_code}\\\\n\" http://localhost:3000/claims/666)",
+      "Bash(curl -s http://localhost:3000/claims/666)",
+      "Bash(grep -oE \"documents[^0-9]{0,40}[0-9,]+ rows\")",
+      "Bash(ruby -c app/controllers/imports_controller.rb)",
+      "Bash(grep -o -i \"429[^0-9.]\\\\{0,20\\\\}\" \"/Users/vaibhavkapur/Documents/Security Deposit/log/development.log\")",
+      "Bash(pkill -f \"puma\")"
     ]
   }
 }

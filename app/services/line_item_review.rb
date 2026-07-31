@@ -11,8 +11,10 @@
 #
 # Ledger eligibility: "first full month rent never paid" was a hard historical
 # decline. The ledger's payment rows let us flag it — flagged claims are
-# referred (not auto-declined) since scanned ledgers may be incomplete.
+# declined under the binary conservative policy.
 class LineItemReview
+  # Binary conservative mapping: categories that historically needed human
+  # review are denied rather than parked (reasons preserve the why).
   COVERAGE = {
     "unpaid_rent" => "allowed",
     "damage" => "allowed",
@@ -23,23 +25,36 @@ class LineItemReview
     "trash_removal" => "allowed",
     "reletting_fee" => "allowed",
     "notice_fee" => "allowed",
-    "utility" => "disallowed",
-    "insurance_fee" => "disallowed",
-    "late_fee" => "needs_review",
-    "admin_fee" => "needs_review",
-    "lease_break_fee" => "needs_review",   # SCRA: not chargeable on military transfer
-    "legal_fee" => "needs_review",
-    "pet_fee" => "needs_review",
-    "other" => "needs_review"
+    "utility" => "denied",
+    "insurance_fee" => "denied",
+    "late_fee" => "denied",
+    "admin_fee" => "denied",
+    "lease_break_fee" => "denied",   # SCRA: not chargeable on military transfer
+    "legal_fee" => "denied",
+    "pet_fee" => "denied",
+    "other" => "denied"
   }.freeze
 
   REASONS = {
+    "unpaid_rent" => "unpaid rent is a covered charge",
+    "damage" => "tenant damage is a covered charge",
+    "cleaning" => "move-out cleaning is a covered charge",
+    "painting" => "painting is a covered charge",
+    "carpet_replacement" => "carpet replacement is a covered charge",
+    "rekey" => "rekeying is a covered charge",
+    "trash_removal" => "trash removal is a covered charge",
+    "reletting_fee" => "reletting fee is a covered charge",
+    "notice_fee" => "notice fee is a covered charge",
     "utility" => "utility charge-backs are not covered",
     "insurance_fee" => "program fees (renters insurance / SD protection) are not claimable",
-    "lease_break_fee" => "verify tenant is not a servicemember (SCRA) before allowing",
-    "late_fee" => "late fee coverage requires review",
-    "other" => "unclassified charge requires review"
+    "lease_break_fee" => "not chargeable to servicemembers (SCRA); denied without verification",
+    "late_fee" => "late fee coverage unverified",
+    "admin_fee" => "admin fee coverage unverified",
+    "legal_fee" => "legal fee coverage unverified",
+    "pet_fee" => "pet fee coverage unverified",
+    "other" => "unclassified charge"
   }.freeze
+  DEFAULT_DENIAL_REASON = "excluded under conservative binary policy".freeze
 
   FIRST_MONTH_WINDOW_DAYS = 45
 
@@ -54,12 +69,12 @@ class LineItemReview
     classify_items
 
     if (flag = first_month_default_flag)
-      return record("refer", reasons: [flag])
+      return record("decline", reasons: [flag])
     end
 
     allowed = @items.select { |i| i.disposition == "allowed" && i.amount.positive? }.sum(&:amount)
     credits = @items.select { |i| i.amount.negative? && i.category.in?(%w[credit payment]) }.sum(&:amount)
-    review_total = @items.select { |i| i.disposition == "needs_review" && i.amount.positive? }.sum(&:amount)
+    denied_total = @items.select { |i| i.disposition == "denied" && i.amount.positive? }.sum(&:amount)
     net_allowed = [allowed + credits, 0].max
 
     cap = @claim.policy&.max_benefit
@@ -67,12 +82,14 @@ class LineItemReview
 
     breakdown = "allowed #{allowed.to_f.round(2)}, credits #{credits.to_f.round(2)}, " \
                 "cap #{cap&.to_f || 'none'} -> payout #{payout.to_f.round(2)}"
+    if denied_total.positive?
+      breakdown += "; #{denied_total.to_f.round(2)} in charges denied"
+    end
 
-    if review_total.positive?
-      record("refer", amount: payout,
-             reasons: ["#{breakdown}; #{review_total.to_f.round(2)} in charges need review"])
-    else
+    if payout.positive?
       record("approve", amount: payout, reasons: [breakdown])
+    else
+      record("decline", reasons: ["no allowable charges after review; #{breakdown}"])
     end
   end
 
@@ -80,10 +97,14 @@ class LineItemReview
 
   def classify_items
     @items.each do |item|
-      next unless item.amount.positive? # credits/payments aren't claimed charges
-
-      disposition = COVERAGE.fetch(item.category, "needs_review")
-      item.update!(disposition: disposition, disposition_reason: REASONS[item.category])
+      if item.amount.positive?
+        disposition = COVERAGE.fetch(item.category, "denied")
+        reason = REASONS.fetch(item.category, DEFAULT_DENIAL_REASON)
+        item.update!(disposition: disposition, disposition_reason: reason)
+      else
+        # Credits/payments aren't claimed charges; they net against the payout.
+        item.update!(disposition: "allowed", disposition_reason: "credit/payment nets against payout")
+      end
     end
   end
 
