@@ -60,7 +60,7 @@ module ApplicationHelper
           label: "approve",
           items: [
             "full policy benefit if eviction (claims.termination_type)",
-            "claim amount, capped at policy benefit, if termination_type is blank"
+            "claim amount, capped at policy benefit, if move-out or blank termination"
           ]
         },
         {
@@ -69,8 +69,7 @@ module ApplicationHelper
             %(no policy, or blank "Max Benefit"),
             %("Amount of Claim" blank or ≤ 0),
             %(hold_reason ("Hold Reason" non-empty)),
-            "red-flag comments: do-not-pay / dispute / attorney / fraud",
-            "an explicit non-eviction termination_type (move-out etc.)"
+            "red-flag comments: do-not-pay / dispute / attorney / fraud"
           ]
         }
       ]

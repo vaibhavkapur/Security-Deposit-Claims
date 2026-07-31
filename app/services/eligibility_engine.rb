@@ -30,10 +30,10 @@ class EligibilityEngine
       # claimed amount (lost rent accrues past the claim figure).
       record("approve", amount: @claim.policy.max_benefit,
              reasons: ["eviction: historically paid full max benefit (87% exact)"])
-    elsif @claim.termination_type.blank?
-      # No explicit termination to disqualify it: pay the claimed amount,
-      # capped at the policy benefit (the historical min(claim_amount,
-      # max_benefit) pattern).
+    else
+      # Move-out or blank termination: pay the claimed amount, capped at the
+      # policy benefit (the historical min(claim_amount, max_benefit)
+      # pattern). Stage 2 can still overturn on ledger evidence.
       amount = [@claim.claim_amount, @claim.policy.max_benefit].min
       reason = if @claim.claim_amount <= @claim.policy.max_benefit
         "claim amount #{@claim.claim_amount} within policy max benefit #{@claim.policy.max_benefit}"
@@ -41,12 +41,6 @@ class EligibilityEngine
         "claim amount #{@claim.claim_amount} capped at policy max benefit #{@claim.policy.max_benefit}"
       end
       record("approve", amount: amount, reasons: [reason])
-    else
-      # An explicit non-eviction termination is a final decline —
-      # LineItemReview never revives it.
-      record("decline",
-             reasons: ["explicit non-eviction termination (#{@claim.termination_type}): not payable " \
-                       "(claim #{@claim.claim_amount}, max benefit #{@claim.policy.max_benefit})"])
     end
   end
 
