@@ -86,6 +86,17 @@
         <% end %>
       </tbody>
     </table>
+    <% if c.mismatch_rows.any? %>
+      <% missing = c.missing_pdf_mismatch_rows %>
+      <% declined = missing.count { |r| r.my_outcome == "decline" } %>
+      <p class="source-note">
+        Of the <%= number_with_delimiter(c.mismatch_rows.size) %> claims we decided differently,
+        <%= number_with_delimiter(missing.size) %>
+        (<%= number_to_percentage(100.0 * missing.size / c.mismatch_rows.size, precision: 1) %>)
+        have no extracted PDF ledger, so my decision came from spreadsheet rules alone —
+        <%= number_with_delimiter(declined) %> of those are claims I declined that the team approved.
+      </p>
+    <% end %>
   </section>
 
   <section class="page-section">

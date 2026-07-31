@@ -69,6 +69,18 @@ class AdjudicationComparisonTest < ActiveSupport::TestCase
     assert_equal 3, result.sheet_decline_count
   end
 
+  test "splits mismatches by whether the claim has extracted line items" do
+    decided_claim(status: "Approved", my_outcome: "approve") # agreement — excluded
+    with_pdf = decided_claim(status: "Approved", my_outcome: "decline")
+    create_line_item(claim: with_pdf)
+    without_pdf = decided_claim(status: "Declined", my_outcome: "approve")
+
+    result = AdjudicationComparison.new.call
+
+    assert_equal [with_pdf, without_pdf].to_set, result.mismatch_rows.map(&:claim).to_set
+    assert_equal [without_pdf], result.missing_pdf_mismatch_rows.map(&:claim)
+  end
+
   # -- amount comparison ------------------------------------------------------------
 
   test "computes amount deltas for rows both sides approved and priced" do

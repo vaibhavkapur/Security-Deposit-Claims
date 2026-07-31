@@ -25,6 +25,7 @@ class AdjudicationComparison
     :my_approve_count, :my_decline_count,
     :sheet_approve_count, :sheet_decline_count,
     :matrix, :agreement_count,
+    :mismatch_rows, :missing_pdf_mismatch_rows,
     :both_approved_rows, :priced_rows, :unpriced_count,
     :exact_rows, :higher_rows, :lower_rows,
     :my_total, :sheet_total,
@@ -59,6 +60,9 @@ class AdjudicationComparison
     matrix = Hash.new(0)
     decided.each { |r| matrix[[r.my_outcome, r.sheet_outcome]] += 1 }
 
+    mismatches = decided.select { |r| r.my_outcome != r.sheet_outcome }
+    missing_pdf = mismatches.select { |r| r.claim.claim_line_items.empty? }
+
     both_approved = decided.select { |r| r.my_outcome == "approve" && r.sheet_outcome == "approve" }
     priced = both_approved.select { |r| r.amount_delta }
 
@@ -72,6 +76,8 @@ class AdjudicationComparison
       sheet_decline_count: decided.count { |r| r.sheet_outcome == "decline" },
       matrix: matrix,
       agreement_count: matrix[%w[approve approve]] + matrix[%w[decline decline]],
+      mismatch_rows: mismatches,
+      missing_pdf_mismatch_rows: missing_pdf,
       both_approved_rows: both_approved,
       priced_rows: priced,
       unpriced_count: both_approved.size - priced.size,
@@ -87,7 +93,7 @@ class AdjudicationComparison
   private
 
   def build_rows
-    Claim.joins(:adjudication_decision).includes(:adjudication_decision).map do |claim|
+    Claim.joins(:adjudication_decision).includes(:adjudication_decision, :claim_line_items).map do |claim|
       decision = claim.adjudication_decision
       Row.new(
         claim: claim,
