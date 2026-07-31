@@ -68,6 +68,7 @@ module ApplicationHelper
           items: [
             %(no policy, or blank "Max Benefit"),
             %("Amount of Claim" blank or ≤ 0),
+            "claim filed before lease start (data error)",
             %(hold_reason ("Hold Reason" non-empty)),
             "red-flag comments: do-not-pay / dispute / attorney / fraud"
           ]
