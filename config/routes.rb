@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   post "adjudicate", to: "imports#adjudicate", as: :adjudicate
   post "extract", to: "imports#extract", as: :extract
   resources :claims, only: [:index, :show]
+  get "analytics", to: "analytics#index", as: :analytics
   get "activities/unlinked", to: "activities#unlinked", as: :unlinked_activities
 
   get "up" => "rails/health#show", as: :rails_health_check

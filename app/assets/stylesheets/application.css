@@ -91,3 +91,41 @@ table.detail.ledger-summary { width: auto; min-width: 420px; }
 p.source-note { margin: 0.25rem 0 0.5rem; }
 .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
 .upload-label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+.header-links { margin-left: auto; margin-right: 1rem; }
+.header-links a { font-weight: 600; }
+
+/* Analytics page */
+.analytics-intro { max-width: 70ch; color: #444; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.stat-tile { border: 1px solid #e2e2e2; border-radius: 8px; padding: 0.75rem 1rem; background: #fcfcfb; }
+.stat-value { font-size: 1.7rem; font-weight: 650; line-height: 1.2; }
+.stat-label { font-size: 12px; color: #52514e; margin-top: 0.2rem; }
+.stat-sub { font-size: 12px; color: #898781; margin-top: 0.15rem; }
+.rate-legend { display: flex; gap: 1rem; margin: 0.5rem 0 0.75rem; }
+.legend-chip { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 13px; color: #52514e; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.swatch-mine { background: #2a78d6; }
+.swatch-sheet { background: #eb6834; }
+.swatch-outcome { background: #4a3aa7; }
+.swatch-exact { background: #1baf7a; }
+.bar-outcome { background: #4a3aa7; }
+.bar-exact { background: #1baf7a; }
+.sim-chart { max-width: 720px; margin: 1rem 0; }
+.rate-group { margin: 0.75rem 0 1rem; }
+.rate-group-label { font-size: 13px; font-weight: 600; margin-bottom: 0.25rem; }
+.rate-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2px; }
+.bar { height: 16px; border-radius: 0 4px 4px 0; flex-shrink: 0; }
+.bar-mine { background: #2a78d6; }
+.bar-sheet { background: #eb6834; }
+.bar-value { font-size: 12px; color: #52514e; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dist-chart { margin: 1.25rem 0; max-width: 640px; }
+.dist-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2px; }
+.dist-label { width: 7.5rem; font-size: 13px; text-align: right; flex-shrink: 0; }
+.matrix-table { width: auto; min-width: 420px; }
+.matrix-table th { background: #fafafa; }
+.matrix-cell { text-align: center; padding: 12px 24px; }
+.matrix-count { display: block; font-size: 1.3rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+.matrix-share { display: block; font-size: 12px; color: #52514e; }
+.subsection-heading { font-size: 1rem; margin: 1.5rem 0 0.25rem; }
+.why-cell { max-width: 40ch; }
+td.num { font-variant-numeric: tabular-nums; }

@@ -1,0 +1,196 @@
+<header class="page-header">
+  <h1>Adjudication analytics</h1>
+</header>
+
+<p><%= link_to "← Back to import", root_path %> · <%= link_to "Claims", claims_path %></p>
+
+<% c = @comparison %>
+<% if c.rows.empty? %>
+  <p class="empty-note">No adjudication decisions on file yet. Import the spreadsheet and run the adjudication engine first.</p>
+<% else %>
+  <p class="analytics-intro">
+    My engine and the claims team decided the same <%= number_with_delimiter(c.decided_rows.size) %> claims
+    from different inputs: my rules read the spreadsheet fields and the extracted PDF ledgers; the team also had
+    phone calls, emails, and documents that never made it into either. The point of this page isn't to score who
+    was right - it's to show where the two disagree and why, which is mostly a story about what
+    information each side could see.
+  </p>
+
+  <div class="stat-grid">
+    <div class="stat-tile">
+      <div class="stat-value"><%= number_with_delimiter(c.decided_rows.size) %></div>
+      <div class="stat-label">Claims compared</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-value"><%= number_to_percentage(100.0 * c.my_approve_count / c.decided_rows.size, precision: 1) %></div>
+      <div class="stat-label">My approval rate</div>
+      <div class="stat-sub"><%= number_with_delimiter(c.my_approve_count) %> approved · <%= number_with_delimiter(c.my_decline_count) %> declined</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-value"><%= number_to_percentage(100.0 * c.sheet_approve_count / c.decided_rows.size, precision: 1) %></div>
+      <div class="stat-label">Spreadsheet approval rate</div>
+      <div class="stat-sub"><%= number_with_delimiter(c.sheet_approve_count) %> approved · <%= number_with_delimiter(c.sheet_decline_count) %> declined</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-value"><%= number_to_percentage(100.0 * c.agreement_count / c.decided_rows.size, precision: 1) %></div>
+      <div class="stat-label">Same outcome</div>
+      <div class="stat-sub"><%= number_with_delimiter(c.agreement_count) %> claims decided the same way</div>
+    </div>
+  </div>
+
+  <section class="page-section">
+    <h2>Outcomes side by side</h2>
+    <div class="rate-legend">
+      <span class="legend-chip"><span class="swatch swatch-mine"></span> My rules</span>
+      <span class="legend-chip"><span class="swatch swatch-sheet"></span> Spreadsheet</span>
+    </div>
+    <% total = c.decided_rows.size.to_f %>
+    <% [["Approve", c.my_approve_count, c.sheet_approve_count],
+        ["Decline", c.my_decline_count, c.sheet_decline_count]].each do |label, mine, sheet| %>
+      <div class="rate-group">
+        <div class="rate-group-label"><%= label %></div>
+        <% [[mine, "mine"], [sheet, "sheet"]].each do |count, series| %>
+          <div class="rate-row">
+            <div class="bar bar-<%= series %>" style="width: <%= (100.0 * count / total).round(1) %>%"></div>
+            <span class="bar-value"><%= number_to_percentage(100.0 * count / total, precision: 1) %> · <%= number_with_delimiter(count) %></span>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="page-section">
+    <h2>Agreement matrix</h2>
+    <p class="source-note">Rows are my decision; columns are the spreadsheet's. The diagonal is agreement.</p>
+    <% max_cell = c.matrix.values.max.to_f %>
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Spreadsheet approved</th>
+          <th>Spreadsheet declined</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% [["approve", "I approved"], ["decline", "I declined"]].each do |mine, row_label| %>
+          <tr>
+            <th><%= row_label %></th>
+            <% %w[approve decline].each do |sheet| %>
+              <% count = c.matrix[[mine, sheet]] %>
+              <td class="matrix-cell" style="background: rgba(42, 120, 214, <%= (0.32 * count / max_cell).round(3) %>)">
+                <span class="matrix-count"><%= number_with_delimiter(count) %></span>
+                <span class="matrix-share"><%= number_to_percentage(100.0 * count / total, precision: 1) %></span>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="page-section">
+    <h2>Amounts on claims we both approved</h2>
+    <% priced = c.priced_rows %>
+    <div class="stat-grid">
+      <div class="stat-tile">
+        <div class="stat-value"><%= number_with_delimiter(c.both_approved_rows.size) %></div>
+        <div class="stat-label">Approved by both</div>
+        <% if c.unpriced_count.positive? %>
+          <div class="stat-sub"><%= c.unpriced_count %> without an amount on one side</div>
+        <% end %>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-value"><%= number_to_currency(c.my_total, precision: 0) %></div>
+        <div class="stat-label">My total payout</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-value"><%= number_to_currency(c.sheet_total, precision: 0) %></div>
+        <div class="stat-label">Spreadsheet total payout</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-value"><%= number_to_currency(c.my_total - c.sheet_total, precision: 0) %></div>
+        <div class="stat-label">Net difference (mine − sheet)</div>
+      </div>
+    </div>
+
+    <% if priced.any? %>
+      <div class="dist-chart">
+        <% dist = [["Same amount", c.exact_rows.size], ["I'd pay more", c.higher_rows.size], ["I'd pay less", c.lower_rows.size]] %>
+        <% dist_max = dist.map(&:last).max.to_f %>
+        <% dist.each do |label, count| %>
+          <div class="dist-row">
+            <span class="dist-label"><%= label %></span>
+            <div class="bar bar-mine" style="width: <%= (85.0 * count / dist_max).round(1) %>%"></div>
+            <span class="bar-value"><%= number_with_delimiter(count) %> · <%= number_to_percentage(100.0 * count / priced.size, precision: 1) %></span>
+          </div>
+        <% end %>
+      </div>
+
+      <h3 class="subsection-heading">Why the amounts differ</h3>
+      <% amount_why = {
+           "Eviction — paid at full max benefit" =>
+             "My rule pays evictions at the policy max benefit - the historical pattern where 87% of paid evictions " \
+             "received exactly that - while the spreadsheet amount reflects the case-by-case figure the team settled on.",
+           "Ledger shows a recoverable balance (Stage 2)" =>
+             "I pay the extracted ledger's recoverable balance (allowed charges minus credits). The team's figure came " \
+             "from their own read of the documents, which can allow or exclude different charges than my line-item rules.",
+           "Claim amount paid as filed (within max benefit)" =>
+             "I pay the claim amount exactly as filed. Where the spreadsheet differs, the team adjusted the figure during " \
+             "review - usually conversations or business decisions the row itself doesn't capture.",
+           "Claim amount capped at max benefit" =>
+             "I cap the payout at the policy max benefit. Differences here mean the team paid something other than the cap " \
+             "on a claim that exceeded it."
+         } %>
+      <table>
+        <thead>
+          <tr>
+            <th>My pricing rule</th>
+            <th class="num">Claims</th>
+            <th class="num">My total</th>
+            <th class="num">Sheet total</th>
+            <th>Why the figures diverge</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% c.amount_diff_groups.each do |category, rows| %>
+            <tr>
+              <td><%= category %></td>
+              <td class="num"><%= rows.size %></td>
+              <td class="num"><%= number_to_currency(rows.sum(&:my_amount), precision: 0) %></td>
+              <td class="num"><%= number_to_currency(rows.sum(&:sheet_amount), precision: 0) %></td>
+              <td class="why-cell"><%= amount_why.fetch(category, "Different inputs — see the individual claims.") %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+    <% end %>
+  </section>
+
+  <% if @simulation %>
+    <% sim = @simulation %>
+    <section class="page-section">
+      <h3 class="subsection-heading">What would close the gap</h3>
+
+      <div class="sim-chart">
+        <div class="rate-legend">
+          <span class="legend-chip"><span class="swatch swatch-outcome"></span> Same outcome</span>
+          <span class="legend-chip"><span class="swatch swatch-exact"></span> Exact amount</span>
+        </div>
+        <% sim.scenarios.each do |s| %>
+          <div class="rate-group">
+            <div class="rate-group-label"><%= s.name %></div>
+            <div class="rate-row">
+              <div class="bar bar-outcome" style="width: <%= (0.85 * s.agreement_rate).round(1) %>%"></div>
+              <span class="bar-value"><%= number_to_percentage(s.agreement_rate, precision: 1) %></span>
+            </div>
+            <div class="rate-row">
+              <div class="bar bar-exact" style="width: <%= (0.85 * s.exact_pct).round(1) %>%"></div>
+              <span class="bar-value"><%= number_to_percentage(s.exact_pct, precision: 1) %></span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+<% end %>

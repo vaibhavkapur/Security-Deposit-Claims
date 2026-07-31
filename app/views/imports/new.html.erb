@@ -1,5 +1,10 @@
 <header class="page-header">
   <h1>Security Deposit Claims</h1>
+  <% if AdjudicationDecision.any? %>
+    <nav class="header-links">
+      <%= link_to "Analytics", analytics_path %>
+    </nav>
+  <% end %>
   <% if Claim.any? %>
     <%= button_to "Reset", import_path, method: :delete,
           class: "clear-button",
