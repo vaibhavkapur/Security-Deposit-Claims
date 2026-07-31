@@ -64,6 +64,12 @@ group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
+
+  # Build .xlsx files in tests for the import services
+  gem "caxlsx"
+
+  # Rails 7.1's test runner is incompatible with minitest 6
+  gem "minitest", "~> 5.25"
 end
 gem "roo", "~> 2.10"
 gem "anthropic", "~> 1.0"

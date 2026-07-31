@@ -72,11 +72,11 @@ class DocumentExtraction
 
   def call
     unless EXTRACTABLE_DOC_TYPES.include?(@document.doc_type)
-      return mark("not_extractable", error: "doc_type #{@document.doc_type} is not extracted")
+      return skip("doc_type #{@document.doc_type} is not extracted")
     end
 
     source = content_block
-    return @document unless source # mark() already called
+    return @document unless source # skip() already called
 
     response = client.messages.create(
       model: MODEL,
@@ -87,12 +87,12 @@ class DocumentExtraction
     )
 
     if response.stop_reason == :refusal
-      return mark("refused", error: "model declined the request")
+      return skip("model declined the request")
     end
 
     tool_use = response.content.find { |block| block.type == :tool_use }
     if tool_use.nil?
-      return mark("failed", error: "no tool_use block in response (stop_reason: #{response.stop_reason})")
+      return skip("no tool_use block in response (stop_reason: #{response.stop_reason})")
     end
 
     extracted = tool_use.input.to_h.deep_stringify_keys

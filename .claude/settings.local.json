@@ -135,7 +135,19 @@
       "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --screenshot=/private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/2be8e06e-ce78-457d-b787-cd162c81d3d0/scratchpad/analytics_top.png --window-size=1200,2400 --hide-scrollbars http://localhost:3000/analytics)",
       "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --screenshot=/private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/2be8e06e-ce78-457d-b787-cd162c81d3d0/scratchpad/analytics_full.png --window-size=1200,4600 --hide-scrollbars http://localhost:3000/analytics)",
       "Bash(node \"/private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/2be8e06e-ce78-457d-b787-cd162c81d3d0/scratchpad/validate_palette.js\" \"#4a3aa7,#1baf7a\" --mode light --surface \"#ffffff\")",
-      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --screenshot=/private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/2be8e06e-ce78-457d-b787-cd162c81d3d0/scratchpad/analytics_infographic.png --window-size=1200,3000 --hide-scrollbars http://localhost:3000/analytics)"
+      "Bash('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' --headless --disable-gpu --screenshot=/private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/2be8e06e-ce78-457d-b787-cd162c81d3d0/scratchpad/analytics_infographic.png --window-size=1200,3000 --hide-scrollbars http://localhost:3000/analytics)",
+      "Bash(RAILS_ENV=test bin/rails db:test:prepare)",
+      "Bash(command -v pdftotext)",
+      "Bash(mkdir -p /private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/92ec23a1-db42-414c-a2c0-df3392e8fbd4/scratchpad/zips)",
+      "Bash(unzip -o -q d7/d71ff26492abb6118efd9dcb458fc0579a180fbba4bf7c45b0809ab48e72eeb1.zip deposit_disposition* -d /private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/92ec23a1-db42-414c-a2c0-df3392e8fbd4/scratchpad/zips/1237)",
+      "Bash(unzip -o -q b4/b4fca0a7a0deefc3923c36ec7ce3a2010e897e38054ca5e8a219e66f3488468b.zip deposit_disposition* -d /private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/92ec23a1-db42-414c-a2c0-df3392e8fbd4/scratchpad/zips/1238)",
+      "Bash(unzip -o -q c5/c572aacde701683e09662f50527879ad880eb091d26fd7fd14966b72391cbf2d.zip deposit_disposition* -d /private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/92ec23a1-db42-414c-a2c0-df3392e8fbd4/scratchpad/zips/1242)",
+      "Bash(unzip -o -q ec/ece6074f2731bbc0906c6625910d58a48e23e85ae5227f7d62c45155a293e9a6.zip 'original \\(3\\).pdf' -d /private/tmp/claude-501/-Users-vaibhavkapur-Documents-Security-Deposit/92ec23a1-db42-414c-a2c0-df3392e8fbd4/scratchpad/zips/1243)",
+      "Bash(unzip -l docs.zip)",
+      "Bash(awk '{print $NF}')",
+      "Bash(pkill -f \"bin/rails test\")",
+      "Bash(PARALLEL_WORKERS=1 bin/rails test test/services/eligibility_engine_test.rb test/services/comment_red_flags_test.rb)",
+      "Bash(PARALLEL_WORKERS=1 bin/rails test)"
     ]
   }
 }
