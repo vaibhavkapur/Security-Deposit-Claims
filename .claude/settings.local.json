@@ -147,7 +147,8 @@
       "Bash(awk '{print $NF}')",
       "Bash(pkill -f \"bin/rails test\")",
       "Bash(PARALLEL_WORKERS=1 bin/rails test test/services/eligibility_engine_test.rb test/services/comment_red_flags_test.rb)",
-      "Bash(PARALLEL_WORKERS=1 bin/rails test)"
+      "Bash(PARALLEL_WORKERS=1 bin/rails test)",
+      "Artifact"
     ]
   }
 }
