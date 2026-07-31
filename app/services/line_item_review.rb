@@ -83,22 +83,19 @@ class LineItemReview
 
     allowed = @items.select { |i| i.disposition == "allowed" && i.amount.positive? }.sum(&:amount)
     credits = @items.select { |i| i.amount.negative? && i.category.in?(%w[credit payment]) }.sum(&:amount)
-    denied_total = @items.select { |i| i.disposition == "denied" && i.amount.positive? }.sum(&:amount)
     net_allowed = allowed + credits
 
     cap = @claim.policy&.max_benefit
     payout = cap ? [net_allowed, cap].min : net_allowed
 
-    breakdown = "allowed #{allowed.to_f.round(2)}, credits #{credits.to_f.round(2)}, " \
-                "cap #{cap&.to_f || 'none'} -> payout #{payout.to_f.round(2)}"
-    if denied_total.positive?
-      breakdown += "; #{denied_total.to_f.round(2)} in charges denied"
-    end
-
+    # The reason stays a short sentence; the claim page renders the full
+    # allowed/credits/cap arithmetic as a table from the line items.
     if payout.positive?
-      record("approve", amount: payout, reasons: [breakdown])
+      record("approve", amount: payout,
+             reasons: ["ledger shows a recoverable balance (allowed charges exceed credits)"])
     else
-      record("decline", reasons: ["no recoverable balance in ledger; #{breakdown}"])
+      record("decline",
+             reasons: ["no recoverable balance in ledger (credits cover all allowed charges)"])
     end
   end
 

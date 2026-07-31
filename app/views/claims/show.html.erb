@@ -124,8 +124,35 @@
     <% if @decision.amount %>
       <li>Amount: <%= number_to_currency(@decision.amount) %></li>
     <% end %>
-    <li>Reason: <%= @decision.reason %></li>
+    <% parts = @decision.reason.to_s.split("; ") %>
+    <% if parts.size <= 1 %>
+      <li>Reason: <%= @decision.reason %></li>
+    <% else %>
+      <li>
+        Reasons:
+        <ul>
+          <% parts.each do |part| %>
+            <li><%= part %></li>
+          <% end %>
+        </ul>
+      </li>
+    <% end %>
   </ul>
+
+  <% if @claim.claim_line_items.any? %>
+    <% summary = ledger_summary(@claim) %>
+    <h3 class="ledger-heading">Ledger math</h3>
+    <table class="detail ledger-summary">
+      <tr><th>Allowed charges</th><td><%= number_to_currency(summary[:allowed]) %></td></tr>
+      <tr><th>Credits &amp; payments</th><td><%= number_to_currency(summary[:credits]) %></td></tr>
+      <tr><th>Net recoverable</th><td><%= number_to_currency(summary[:net]) %></td></tr>
+      <tr><th>Policy max benefit</th><td><%= summary[:cap] ? number_to_currency(summary[:cap]) : "none on file" %></td></tr>
+      <tr><th>Payout (net, capped)</th><td><strong><%= number_to_currency(summary[:payout]) %></strong></td></tr>
+      <% if summary[:denied].positive? %>
+        <tr><th>Denied charges (excluded)</th><td><%= number_to_currency(summary[:denied]) %></td></tr>
+      <% end %>
+    </table>
+  <% end %>
 <% end %>
 
 <h2>Activity<% if @activities.any? %> (<%= @activities.size %>)<% end %></h2>

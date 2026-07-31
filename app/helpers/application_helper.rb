@@ -41,6 +41,19 @@ module ApplicationHelper
     JSON.pretty_generate(SAMPLE_EXTRACTED_JSON)
   end
 
+  # Ledger math behind a Stage 2 ruling, recomputed from the persisted line
+  # item dispositions with the same sums as LineItemReview#call.
+  def ledger_summary(claim)
+    items = claim.claim_line_items
+    allowed = items.select { |i| i.disposition == "allowed" && i.amount.positive? }.sum(&:amount)
+    credits = items.select { |i| i.amount.negative? && i.category.in?(%w[credit payment]) }.sum(&:amount)
+    denied = items.select { |i| i.disposition == "denied" && i.amount.positive? }.sum(&:amount)
+    net = allowed + credits
+    cap = claim.policy&.max_benefit
+    { allowed: allowed, credits: credits, denied: denied, net: net,
+      cap: cap, payout: cap ? [net, cap].min : net }
+  end
+
   # [category, disposition, reason] rows for the claim_line_items tooltip,
   # straight from the Stage 2 rules.
   def line_item_disposition_rules

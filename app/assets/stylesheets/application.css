@@ -84,6 +84,9 @@ form.button_to button:hover { background: #fdf0f0; }
 .comment-author { font-weight: 600; color: #222; }
 .comment-body { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
 .link-note { font-size: 12px; color: #777; }
+.decision-detail ul { margin: 0.25rem 0 0; padding-left: 1.25rem; }
+.ledger-heading { font-size: 1rem; margin: 1rem 0 0.25rem; }
+table.detail.ledger-summary { width: auto; min-width: 420px; }
 .source-note { font-size: 12px; color: #777; font-style: italic; }
 p.source-note { margin: 0.25rem 0 0.5rem; }
 .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
