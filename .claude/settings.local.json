@@ -113,7 +113,9 @@
       "Bash(ruby -rerb -e 'ERB.new\\(File.read\\(\"app/views/imports/_table.html.erb\"\\), trim_mode: \"-\"\\).src; puts \"erb ok\"')",
       "Bash(curl -s http://localhost:3000/claims/123)",
       "Bash(ruby -c app/services/line_item_review.rb app/services/eligibility_engine.rb app/helpers/application_helper.rb)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/claims/123)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/claims/123)",
+      "Bash(curl -s http://localhost:3000/claims/18)",
+      "Bash(ruby -c app/services/eligibility_engine.rb)"
     ]
   }
 }

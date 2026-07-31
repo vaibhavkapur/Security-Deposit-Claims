@@ -31,11 +31,16 @@ class EligibilityEngine
       record("approve", amount: @claim.policy.max_benefit,
              reasons: ["eviction: historically paid full max benefit (87% exact)"])
     elsif @claim.termination_type.blank?
-      # A blank termination type is payable: 220 of 241 such claims were
-      # historically paid, 147 at exactly max benefit. Only an explicit
-      # non-eviction termination declines.
-      record("approve", amount: @claim.policy.max_benefit,
-             reasons: ["no termination type on file: payable (historically paid, mostly at exact max benefit)"])
+      # No explicit termination to disqualify it: pay the claimed amount,
+      # capped at the policy benefit (the historical min(claim_amount,
+      # max_benefit) pattern).
+      amount = [@claim.claim_amount, @claim.policy.max_benefit].min
+      reason = if @claim.claim_amount <= @claim.policy.max_benefit
+        "claim amount #{@claim.claim_amount} within policy max benefit #{@claim.policy.max_benefit}"
+      else
+        "claim amount #{@claim.claim_amount} capped at policy max benefit #{@claim.policy.max_benefit}"
+      end
+      record("approve", amount: amount, reasons: [reason])
     else
       # An explicit non-eviction termination is a final decline —
       # LineItemReview never revives it.

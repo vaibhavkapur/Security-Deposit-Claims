@@ -60,7 +60,7 @@ module ApplicationHelper
           label: "approve",
           items: [
             "full policy benefit if eviction (claims.termination_type)",
-            "full policy benefit if termination_type is blank (historically paid like evictions)"
+            "claim amount, capped at max benefit, if termination_type is blank"
           ]
         },
         {
