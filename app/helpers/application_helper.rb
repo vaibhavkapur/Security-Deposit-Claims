@@ -90,20 +90,19 @@ module ApplicationHelper
     },
     {
       heading: "Stage 2 — PDF extraction",
-      intro: "overrides Stage 1 once line items are extracted; " \
-             "payout = allowed line items − credits, capped at policy benefit",
+      intro: "payout = allowed line items − credits",
       groups: [
         {
           label: "approve",
           items: [
-            "payout > 0 → approve at the ledger payout"
+            "payout > 0 → approved for that amount (capped at max benefit)"
           ]
         },
         {
           label: "deny",
           items: [
             "red-flag comments: do-not-pay / dispute / attorney / fraud",
-            "first month's rent never paid (ledger)",
+            "first month's rent never paid",
             "payout ≤ 0"
           ]
         }
