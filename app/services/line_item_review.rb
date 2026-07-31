@@ -1,7 +1,15 @@
 # Stage 2 of the adjudication engine: classifies a claim's extracted line
-# items against coverage rules, checks ledger-level eligibility patterns, and
-# proposes a payout. Runs only when the claim has extracted line items
-# (i.e. after DocumentExtraction has processed its documents).
+# items against coverage rules and checks ledger-level eligibility patterns.
+# Runs only when the claim has extracted line items (i.e. after
+# DocumentExtraction has processed its documents).
+#
+# Deny-wins merge with Stage 1 (EligibilityEngine): this engine can overturn
+# a Stage 1 approval to a decline (red flags, first-month default, no
+# recoverable ledger balance), but never flips a decline to an approval and
+# never changes an approved amount — evictions keep the full max benefit
+# because the ledger snapshot understates rent that accrues after filing.
+# Line items are still classified on declined claims so the UI can show
+# dispositions.
 #
 # Coverage table sources:
 #   - "There is no coverage for utility charge backs"          -> utility disallowed
@@ -68,6 +76,18 @@ class LineItemReview
 
     classify_items
 
+    # Deny-wins: only a Stage 1 approval can be overturned, so a Stage 1
+    # ruling must exist first. Any existing decline (whatever the reason)
+    # is final.
+    EligibilityEngine.new(@claim).call unless AdjudicationDecision.exists?(claim: @claim)
+    decision = AdjudicationDecision.find_by!(claim: @claim)
+    return keep(decision) if decision.outcome == "decline"
+
+    # Red flags from comment threads can overturn the approval — activities
+    # may have been imported after Stage 1 ran.
+    red_flags = CommentRedFlags.for(@claim)
+    return record("decline", reasons: red_flags) if red_flags.any?
+
     if (flag = first_month_default_flag)
       return record("decline", reasons: [flag])
     end
@@ -75,21 +95,20 @@ class LineItemReview
     allowed = @items.select { |i| i.disposition == "allowed" && i.amount.positive? }.sum(&:amount)
     credits = @items.select { |i| i.amount.negative? && i.category.in?(%w[credit payment]) }.sum(&:amount)
     denied_total = @items.select { |i| i.disposition == "denied" && i.amount.positive? }.sum(&:amount)
-    net_allowed = [allowed + credits, 0].max
+    net_allowed = allowed + credits
 
-    cap = @claim.policy&.max_benefit
-    payout = cap ? [net_allowed, cap].min : net_allowed
-
-    breakdown = "allowed #{allowed.to_f.round(2)}, credits #{credits.to_f.round(2)}, " \
-                "cap #{cap&.to_f || 'none'} -> payout #{payout.to_f.round(2)}"
+    breakdown = "allowed #{allowed.to_f.round(2)}, credits #{credits.to_f.round(2)} " \
+                "-> net #{net_allowed.to_f.round(2)}"
     if denied_total.positive?
       breakdown += "; #{denied_total.to_f.round(2)} in charges denied"
     end
 
-    if payout.positive?
-      record("approve", amount: payout, reasons: [breakdown])
+    if net_allowed.positive?
+      # Ledger supports the claim: the Stage 1 approval stands as-is
+      # (amount untouched — see class comment).
+      keep(decision)
     else
-      record("decline", reasons: ["no allowable charges after review; #{breakdown}"])
+      record("decline", reasons: ["no recoverable balance in ledger; #{breakdown}"])
     end
   end
 
@@ -126,10 +145,18 @@ class LineItemReview
       "#{paid.to_f.round(2)} received in first #{FIRST_MONTH_WINDOW_DAYS} days (rent #{rent.to_f.round(2)})"
   end
 
-  # Overwrites the claim's single decision row with this engine's refined ruling.
+  # Overturns the claim's decision — under deny-wins this is only ever
+  # called to turn an approval into a decline.
   def record(outcome, reasons:, amount: nil)
     decision = AdjudicationDecision.find_or_initialize_by(claim: @claim)
     decision.update!(outcome: outcome, amount: amount, reason: reasons.join("; "))
     EligibilityEngine::Result.new(claim: @claim, outcome: outcome, amount: amount, reasons: reasons)
+  end
+
+  # The standing decision is untouched; return it in Result form so callers
+  # (e.g. the adjudicate:stage2 comparison task) see the ruling that survived.
+  def keep(decision)
+    EligibilityEngine::Result.new(claim: @claim, outcome: decision.outcome,
+                                  amount: decision.amount, reasons: [decision.reason])
   end
 end

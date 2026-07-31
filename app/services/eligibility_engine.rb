@@ -3,15 +3,15 @@
 #
 # Rules are derived from the historical decline reasons and payout patterns
 # in Claims.xlsx:
-#   - duplicate claims were declined ("Duplicate claim.")
 #   - claims without an identifiable policy were declined ("Not our policy.")
 #   - approved amounts were min(claim_amount, max_benefit), paid in full for
 #     evictions and trimmed after line-item review for move-outs
 #
 # Each claim gets exactly one binary decision row (approve | decline).
 # Conservative rule: anything not affirmatively supported is declined.
-# This engine writes the first ruling; LineItemReview overwrites it with a
-# refined one when extracted line items are available.
+# Deny-wins: this engine's declines are final. LineItemReview (Stage 2) can
+# overturn an approval to a decline on PDF evidence, never the reverse, and
+# never changes an approved amount.
 class EligibilityEngine
   Result = Struct.new(:claim, :outcome, :amount, :reasons, keyword_init: true)
 
@@ -30,11 +30,17 @@ class EligibilityEngine
       # claimed amount (lost rent accrues past the claim figure).
       record("approve", amount: @claim.policy.max_benefit,
              reasons: ["eviction: historically paid full max benefit (87% exact)"])
+    elsif @claim.termination_type.blank?
+      # A blank termination type is payable: 220 of 241 such claims were
+      # historically paid, 147 at exactly max benefit. Only an explicit
+      # non-eviction termination declines.
+      record("approve", amount: @claim.policy.max_benefit,
+             reasons: ["no termination type on file: payable (historically paid, mostly at exact max benefit)"])
     else
-      # Move-out charges must be supported by extracted line items;
-      # LineItemReview overwrites this when they exist.
+      # An explicit non-eviction termination is a final decline —
+      # LineItemReview never revives it.
       record("decline",
-             reasons: ["move-out charges unverified — no extracted line items " \
+             reasons: ["explicit non-eviction termination (#{@claim.termination_type}): not payable " \
                        "(claim #{@claim.claim_amount}, max benefit #{@claim.policy.max_benefit})"])
     end
   end
@@ -43,11 +49,6 @@ class EligibilityEngine
 
   def decline_reasons
     reasons = []
-    if (dup = duplicate_of)
-      # History shows some same-lease pairs were both paid (roommates,
-      # re-filings), but binary conservative policy declines suspected dupes.
-      reasons << "possible duplicate of claim ##{dup.tracking_number} (same lease)"
-    end
     reasons << "no policy on file" if @claim.policy.nil?
     reasons << "policy has no max benefit" if @claim.policy && @claim.policy.max_benefit.nil?
     reasons << "no claim amount" if @claim.claim_amount.nil?
@@ -55,13 +56,9 @@ class EligibilityEngine
     if @claim.claim_date && @claim.lease.start_date && @claim.claim_date < @claim.lease.start_date
       reasons << "claim filed before lease start (data error?)"
     end
-    reasons << "flagged as exception in source data" if @claim.exception_flag
     reasons << "open hold reason: #{@claim.hold_reason.truncate(80)}" if @claim.hold_reason.present?
+    reasons.concat(CommentRedFlags.for(@claim))
     reasons
-  end
-
-  def duplicate_of
-    Claim.where(lease_id: @claim.lease_id).where("id < ?", @claim.id).first
   end
 
   def record(outcome, reasons:, amount: nil)

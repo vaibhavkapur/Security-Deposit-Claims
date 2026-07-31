@@ -1,13 +1,54 @@
 <section class="table-section">
   <h3 class="table-heading">
     <code><%= table[:name] %></code>
-    <span class="row-count">
-      <% if table[:total] && table[:total] != table[:count] %>
-        <%= number_with_delimiter(table[:count]) %> extracted of <%= number_with_delimiter(table[:total]) %> rows
-      <% else %>
-        <%= number_with_delimiter(table[:count]) %> rows
-      <% end %>
-    </span>
+    <span class="row-count"><%= number_with_delimiter(table[:total] || table[:count]) %> rows</span>
+    <% if table[:name] == "documents" %>
+      <span class="schema-tip" tabindex="0">i
+        <span class="schema-tip-body">
+          <span class="schema-tip-title">Sample extracted_json</span>
+          <pre><%= sample_extracted_json %></pre>
+        </span>
+      </span>
+    <% elsif table[:name] == "adjudication_decisions" %>
+      <span class="schema-tip" tabindex="0">i
+        <span class="schema-tip-body">
+          <span class="schema-tip-title">Adjudication rules</span>
+          <% ApplicationHelper::ADJUDICATION_FLOW.each do |stage| %>
+            <p class="schema-tip-line"><strong><%= stage[:heading] %></strong></p>
+            <% if stage[:intro] %>
+              <p class="schema-tip-line schema-tip-indent schema-tip-intro"><%= stage[:intro] %></p>
+            <% end %>
+            <% stage[:groups].each do |group| %>
+              <p class="schema-tip-line schema-tip-indent"><strong><%= group[:label] %>:</strong></p>
+              <ul class="schema-tip-list schema-tip-indent">
+                <% group[:items].each do |item| %>
+                  <li><%= item %></li>
+                <% end %>
+              </ul>
+            <% end %>
+          <% end %>
+        </span>
+      </span>
+    <% elsif table[:name] == "claim_line_items" %>
+      <span class="schema-tip" tabindex="0">i
+        <span class="schema-tip-body">
+          <span class="schema-tip-title">Disposition rules</span>
+          <p class="schema-tip-line"><strong>negative amount:</strong></p>
+          <ul class="schema-tip-list">
+            <li>credit / payment — always allowed, nets against the payout</li>
+          </ul>
+          <p class="schema-tip-line"><strong>positive amount:</strong></p>
+          <% line_item_disposition_rules.group_by { |_, disposition, _| disposition }.each do |disposition, rules| %>
+            <p class="schema-tip-line schema-tip-indent"><strong>category <%= disposition %>:</strong></p>
+            <ul class="schema-tip-list schema-tip-indent">
+              <% rules.map(&:first).sort.each do |category| %>
+                <li><%= category %></li>
+              <% end %>
+            </ul>
+          <% end %>
+        </span>
+      </span>
+    <% end %>
   </h3>
 
   <% if table[:count].zero? %>

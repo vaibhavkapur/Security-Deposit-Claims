@@ -8,8 +8,16 @@
   <tr><th>Claim date</th><td><%= @claim.claim_date %></td></tr>
   <tr><th>Claim amount</th><td><%= number_to_currency(@claim.claim_amount) if @claim.claim_amount %></td></tr>
   <tr><th>Termination type</th><td><%= @claim.termination_type %></td></tr>
-  <tr><th>Approval date</th><td><%= @claim.approval_date %></td></tr>
-  <tr><th>Approved benefit</th><td><%= number_to_currency(@claim.approved_benefit_amount) if @claim.approved_benefit_amount %></td></tr>
+  <tr><th>Approval date (historical)</th><td><%= @claim.approval_date %></td></tr>
+  <tr>
+    <th>Approved benefit (historical)</th>
+    <td>
+      <%= number_to_currency(@claim.approved_benefit_amount) if @claim.approved_benefit_amount %>
+      <% if @claim.approved_benefit_amount %>
+        <span class="source-note">original human decision, imported from spreadsheet</span>
+      <% end %>
+    </td>
+  </tr>
   <% if @claim.approved_benefit_note %>
     <tr><th>Approved benefit note</th><td><%= @claim.approved_benefit_note %></td></tr>
   <% end %>
@@ -104,10 +112,14 @@
 
 <% if @decision %>
   <h2>
-    Adjudication
+    Engine adjudication
     <% label = { "approve" => "Allow", "decline" => "Deny" }.fetch(@decision.outcome, @decision.outcome) %>
     <span class="decision-badge decision-badge-<%= @decision.outcome %>"><%= label %></span>
   </h2>
+  <p class="source-note">
+    Automated re-adjudication from data extracted out of this claim's documents —
+    computed independently of the historical approved benefit above.
+  </p>
   <ul class="decision-detail">
     <% if @decision.amount %>
       <li>Amount: <%= number_to_currency(@decision.amount) %></li>

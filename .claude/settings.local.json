@@ -108,7 +108,12 @@
       "Bash(grep -oE \"documents[^0-9]{0,40}[0-9,]+ rows\")",
       "Bash(ruby -c app/controllers/imports_controller.rb)",
       "Bash(grep -o -i \"429[^0-9.]\\\\{0,20\\\\}\" \"/Users/vaibhavkapur/Documents/Security Deposit/log/development.log\")",
-      "Bash(pkill -f \"puma\")"
+      "Bash(pkill -f \"puma\")",
+      "Bash(ruby -c app/helpers/application_helper.rb)",
+      "Bash(ruby -rerb -e 'ERB.new\\(File.read\\(\"app/views/imports/_table.html.erb\"\\), trim_mode: \"-\"\\).src; puts \"erb ok\"')",
+      "Bash(curl -s http://localhost:3000/claims/123)",
+      "Bash(ruby -c app/services/line_item_review.rb app/services/eligibility_engine.rb app/helpers/application_helper.rb)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/claims/123)"
     ]
   }
 }

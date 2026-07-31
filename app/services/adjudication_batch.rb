@@ -5,7 +5,7 @@ class AdjudicationBatch
   def self.call
     done = 0
     Claim.where.missing(:adjudication_decision)
-         .includes(:policy, :lease, :claim_line_items)
+         .includes(:policy, :lease, :claim_line_items, :claim_activities)
          .find_each do |claim|
       EligibilityEngine.new(claim).call
       LineItemReview.new(claim).call if claim.claim_line_items.any?

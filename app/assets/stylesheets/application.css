@@ -30,6 +30,21 @@ table.detail th { width: 220px; background: #fafafa; }
 .scroll-x th, .scroll-x td { white-space: nowrap; }
 .more-rows { color: #777; font-style: italic; text-align: center; }
 .json-cell summary { cursor: pointer; color: #369; }
+.schema-tip { position: relative; cursor: help; display: inline-flex; align-items: center; justify-content: center; width: 1.35rem; height: 1.35rem; border-radius: 50%; background: #369; color: #fff; font-weight: 700; font-size: 0.85rem; font-style: normal; vertical-align: text-bottom; margin-left: 0.15rem; }
+.schema-tip:hover, .schema-tip:focus { background: #24476b; }
+.schema-tip .schema-tip-body { display: none; position: absolute; right: 0; top: 1.6em; z-index: 20; background: #fff; color: #222; font-weight: normal; cursor: auto; border: 1px solid #ccd; border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); padding: 0.6rem 0.75rem; width: max-content; max-width: 34rem; }
+.schema-tip:hover .schema-tip-body, .schema-tip:focus .schema-tip-body { display: block; }
+.schema-tip .schema-tip-title { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 0.25rem; }
+.schema-tip .schema-tip-body pre { margin: 0; font-size: 12px; white-space: pre; text-align: left; max-height: 24rem; overflow: auto; }
+.schema-tip-line { margin: 0 0 0.3rem; font-size: 12px; text-align: left; max-width: 30rem; }
+.schema-tip-line:last-child { margin-bottom: 0; }
+.schema-tip-indent { margin-left: 1rem; }
+.schema-tip-intro { margin-bottom: 0.75rem; }
+.schema-tip-list { margin: 0 0 0.5rem; padding-left: 1.25rem; font-size: 12px; text-align: left; list-style: disc; }
+.schema-tip-list:last-child { margin-bottom: 0; }
+.schema-tip-list li { margin: 0.1rem 0; }
+.schema-tip-steps { list-style: decimal; max-width: 28rem; }
+.schema-tip-steps li { margin: 0.25rem 0; white-space: normal; }
 .json-cell pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 60ch; max-height: 24rem; overflow-y: auto; margin: 0.5rem 0 0; padding: 0.5rem; background: #f4f4f4; border-radius: 6px; font-size: 12px; text-align: left; }
 .flash-notice { background: #e6f4e6; border: 1px solid #b6d7b6; border-radius: 6px; padding: 8px 12px; }
 h2 code { background: #f4f4f4; padding: 1px 6px; border-radius: 4px; }
@@ -39,7 +54,8 @@ h2 code { background: #f4f4f4; padding: 1px 6px; border-radius: 4px; }
 .row-count { font-size: 0.85rem; color: #777; font-weight: normal; }
 .col-type { color: #777; font-family: ui-monospace, monospace; font-size: 13px; }
 .table-section { margin: 1rem 0; border: 1px solid #e2e2e2; border-radius: 8px; padding: 0.5rem 1rem; }
-.table-section .table-heading { font-size: 1.1rem; font-weight: 600; margin: 0; padding: 0.35rem 0; border-bottom: 1px solid #eee; margin-bottom: 0.5rem; }
+.table-section .table-heading { display: flex; align-items: center; gap: 0.5rem; font-size: 1.1rem; font-weight: 600; margin: 0; padding: 0.35rem 0; border-bottom: 1px solid #eee; margin-bottom: 0.5rem; }
+.table-section .table-heading .schema-tip { margin-left: auto; }
 .table-section .table-heading code { background: #f4f4f4; padding: 1px 6px; border-radius: 4px; }
 .page-section { margin-top: 1.5rem; }
 .table-group + .table-group { margin-top: 2.5rem; }
@@ -68,5 +84,7 @@ form.button_to button:hover { background: #fdf0f0; }
 .comment-author { font-weight: 600; color: #222; }
 .comment-body { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
 .link-note { font-size: 12px; color: #777; }
+.source-note { font-size: 12px; color: #777; font-style: italic; }
+p.source-note { margin: 0.25rem 0 0.5rem; }
 .upload-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
 .upload-label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
