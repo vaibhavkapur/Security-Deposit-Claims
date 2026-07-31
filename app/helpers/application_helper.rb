@@ -76,13 +76,13 @@ module ApplicationHelper
     },
     {
       heading: "Stage 2 — PDF extraction",
-      intro: "deny-wins: reviews Stage 1 approvals only — a decline is final; " \
-             "payout = allowed line items − credits",
+      intro: "overrides Stage 1 once line items are extracted; " \
+             "payout = allowed line items − credits, capped at policy benefit",
       groups: [
         {
           label: "approve",
           items: [
-            "payout > 0 → the Stage 1 approval stands, at the Stage 1 amount"
+            "payout > 0 → approve at the ledger payout"
           ]
         },
         {

@@ -62,8 +62,8 @@ class ImportsController < ApplicationController
 
     decided = AdjudicationBatch.call
     # AdjudicationBatch skips already-decided claims, so re-review the ones
-    # this batch added line items to — a new ledger can overturn a standing
-    # approval (declines are final under deny-wins).
+    # this batch added line items to — Stage 2's ledger ruling overrides
+    # their now-stale Stage 1 decisions.
     Claim.where(id: documents.map(&:claim_id).uniq)
          .includes(:policy, :lease, :claim_line_items, :claim_activities)
          .each { |claim| LineItemReview.new(claim).call }

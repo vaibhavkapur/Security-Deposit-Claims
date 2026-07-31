@@ -9,9 +9,8 @@
 #
 # Each claim gets exactly one binary decision row (approve | decline).
 # Conservative rule: anything not affirmatively supported is declined.
-# Deny-wins: this engine's declines are final. LineItemReview (Stage 2) can
-# overturn an approval to a decline on PDF evidence, never the reverse, and
-# never changes an approved amount.
+# This engine writes the first ruling; LineItemReview (Stage 2) overrides it
+# entirely — outcome and amount — once extracted line items exist.
 class EligibilityEngine
   Result = Struct.new(:claim, :outcome, :amount, :reasons, keyword_init: true)
 
@@ -33,7 +32,8 @@ class EligibilityEngine
     else
       # Move-out or blank termination: pay the claimed amount, capped at the
       # policy benefit (the historical min(claim_amount, max_benefit)
-      # pattern). Stage 2 can still overturn on ledger evidence.
+      # pattern). Stage 2 replaces this with the ledger payout when
+      # extracted line items exist.
       amount = [@claim.claim_amount, @claim.policy.max_benefit].min
       reason = if @claim.claim_amount <= @claim.policy.max_benefit
         "claim amount #{@claim.claim_amount} within policy max benefit #{@claim.policy.max_benefit}"
