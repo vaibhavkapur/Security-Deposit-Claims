@@ -59,7 +59,7 @@ module ApplicationHelper
         {
           label: "approve",
           items: [
-            "full max benefit if eviction, otherwise claim amount capped at max benefit (claims.termination_type)"
+            "full max benefit if eviction, otherwise claim amount capped at max benefit"
           ]
         },
         {
