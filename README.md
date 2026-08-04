@@ -2,6 +2,8 @@
 
 Rails app for importing, exploring, and adjudicating security-deposit claims. Source data is a spreadsheet of ~1,244 claims plus a folder of supporting claim documents (ledgers, move-out statements, invoices, SDI forms).
 
+https://github.com/user-attachments/assets/3ce97ff5-8209-4e6f-9533-12932c10ab77
+
 ## How it works
 
 The app is a three-stage pipeline, driven from the import page at the root URL:
@@ -24,7 +26,3 @@ bin/rails server
 
 - `ANTHROPIC_API_KEY` must be set for document extraction (stages 1 and 3 work without it).
 - `config/master.key` is required and not committed.
-
-## Not in the repo
-
-The source data stays local because it contains tenant PII: the claims spreadsheet, the raw document folder, and `storage/` (imported document copies).
