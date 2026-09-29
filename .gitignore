@@ -13,3 +13,6 @@
 /config/master.key
 /.bundle/
 /.env
+
+# Local Claude permissions may include credentials from shell commands
+**/.claude/settings.local.json
